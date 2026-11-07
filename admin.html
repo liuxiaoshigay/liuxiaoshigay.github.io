@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>管理后台 · 刘骁是gay</title>
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#faf9f7">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/css/admin.css">
+</head>
+<body>
+
+<header class="top">
+  <div>
+    <p class="eyebrow">刘骁是gay</p>
+    <h1>句子管理</h1>
+  </div>
+  <nav class="top__links">
+    <a href="./">回到站点</a>
+    <a id="issues-link" href="#" target="_blank" rel="noopener">查看投稿 Issues</a>
+  </nav>
+</header>
+
+<main class="wrap">
+
+  <section class="panel" id="auth-panel">
+    <h2>连接 GitHub</h2>
+    <p class="muted">
+      管理页需要你的 GitHub 写入权限。令牌只保存在这台浏览器的 localStorage 里，
+      只会发给 <code>api.github.com</code>，不会出现在公开页面。
+    </p>
+    <label class="field">
+      <span>Fine-grained token</span>
+      <input id="token-input" type="password" autocomplete="off" spellcheck="false"
+             placeholder="github_pat_...">
+    </label>
+    <div class="actions">
+      <button id="save-token" class="btn btn--primary" type="button">保存并连接</button>
+      <button id="clear-token" class="btn" type="button">清除本机令牌</button>
+    </div>
+    <p id="auth-status" class="status" role="status"></p>
+
+    <details class="help">
+      <summary>怎么创建这个令牌？</summary>
+      <ol>
+        <li>GitHub → Settings → Developer settings → Personal access tokens →
+            <b>Fine-grained tokens</b> → Generate new token。</li>
+        <li>Resource owner 选 <b>liuxiaoshigay</b>；Repository access 选
+            <b>Only select repositories</b> → <b>liuxiaoshigay.github.io</b>。</li>
+        <li>Permissions → Repository permissions → <b>Contents</b> 设为
+            <b>Read and write</b>；<b>Issues</b> 也设为 <b>Read and write</b>
+            （用来读取和关闭投稿 Issue）。Metadata 会自动带上 Read。</li>
+        <li>Generate token，复制 <code>github_pat_...</code>，粘到上面的输入框。</li>
+      </ol>
+      <p class="muted">
+        不要用 classic token；这个 fine-grained token 只对这个仓库有内容读写权限。
+        万一泄露，在同一页面 Revoke 即可。
+      </p>
+    </details>
+  </section>
+
+  <section class="panel" id="editor-panel" hidden>
+    <div class="bar">
+      <p class="count">当前 <b id="quote-count">-</b> 句</p>
+      <button id="reload" class="btn" type="button">重新读取</button>
+    </div>
+
+    <form id="add-form" class="add-form">
+      <label class="field field--small">
+        <span>说话人（可留空）</span>
+        <input id="speaker-input" type="text" maxlength="20" autocomplete="off">
+      </label>
+      <label class="field">
+        <span>句子（最多 120 字）</span>
+        <textarea id="text-input" rows="3" maxlength="120" required></textarea>
+      </label>
+      <div class="actions">
+        <button class="btn btn--primary" type="submit">添加并发布</button>
+      </div>
+    </form>
+
+    <p id="status" class="status" role="status"></p>
+
+    <h2 class="list-title">已发布的句子</h2>
+    <ul id="quote-list" class="quote-list"></ul>
+  </section>
+
+  <section class="panel" id="review-panel" hidden>
+    <div class="bar">
+      <div>
+        <h2>待审核投稿</h2>
+        <p class="muted">来自 GitHub Issues。点「加入词云」会发布并自动关闭该 Issue。</p>
+      </div>
+      <button id="refresh-issues" class="btn" type="button">刷新</button>
+    </div>
+    <p id="issues-status" class="status" role="status"></p>
+    <ul id="issue-list" class="issue-list"></ul>
+  </section>
+
+</main>
+
+<script src="assets/js/site-config.js"></script>
+<script src="assets/js/quote-doc.js"></script>
+<script src="assets/js/admin.js"></script>
+</body>
+</html>

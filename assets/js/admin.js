@@ -10,6 +10,8 @@
 
   var els = {
     token: document.getElementById('token-input'),
+    hint: document.getElementById('token-hint'),
+    showToken: document.getElementById('show-token'),
     save: document.getElementById('save-token'),
     clear: document.getElementById('clear-token'),
     authStatus: document.getElementById('auth-status'),
@@ -59,9 +61,28 @@
     el.className = 'status' + (kind ? ' is-' + kind : '');
   }
 
+  function tokenKind(t) {
+    if (t.indexOf('github_pat_') === 0) return 'fine-grained';
+    if (t.indexOf('ghp_') === 0) return 'classic';
+    if (t.indexOf('gho_') === 0) return 'OAuth';
+    return '未知类型';
+  }
+
+  function updateTokenHint() {
+    if (!els.hint) return;
+    var t = els.token.value.trim();
+    if (!t) {
+      els.hint.textContent = '';
+      return;
+    }
+    var s = '已输入 ' + t.length + ' 个字符 · ' + tokenKind(t);
+    if (t.length < 30) s += ' · 看起来不完整';
+    els.hint.textContent = s;
+  }
+
   async function api(method, path, body) {
     var headers = {
-      'Authorization': 'token ' + state.token,
+      'Authorization': 'Bearer ' + state.token,
       'Accept': 'application/vnd.github+json'
     };
     if (body) headers['Content-Type'] = 'application/json';
@@ -321,7 +342,20 @@
     } catch (err) {
       state.token = '';
       setEditor(false);
-      setStatus(els.authStatus, '连接失败：' + err.message, 'err');
+
+      var msg;
+      if (err.status === 401) {
+        try { localStorage.removeItem(TOKEN_KEY); } catch (e) {}
+        msg = '连接失败：令牌无效（Bad credentials）。请确认完整复制、未过期；' +
+              'fine-grained token 应以 github_pat_ 开头，通常 90 个字符以上。';
+      } else if (err.status === 404) {
+        msg = '连接失败：令牌看不到这个仓库。请确认 Repository access 勾了 liuxiaoshigay.github.io。';
+      } else if (err.status === 403) {
+        msg = '连接失败：权限不足（' + err.message + '）。请确认 Contents 和 Issues 都是 Read and write。';
+      } else {
+        msg = '连接失败：' + err.message;
+      }
+      setStatus(els.authStatus, msg, 'err');
     }
   }
 
@@ -345,13 +379,28 @@
   }
 
   els.save.addEventListener('click', function () {
-    var token = els.token.value.trim();
+    var token = els.token.value.trim()
+      .replace(/^["']|["']$/g, '')
+      .replace(/^(Bearer|token)\s+/i, '')
+      .trim();
+
     if (!token) {
       setStatus(els.authStatus, '先粘贴 Fine-grained token。', 'err');
       return;
     }
+
+    els.token.value = token;
+    updateTokenHint();
     connect(token);
   });
+
+  els.token.addEventListener('input', updateTokenHint);
+
+  if (els.showToken) {
+    els.showToken.addEventListener('change', function () {
+      els.token.type = this.checked ? 'text' : 'password';
+    });
+  }
 
   els.token.addEventListener('keydown', function (ev) {
     if (ev.key === 'Enter') {
@@ -421,8 +470,10 @@
   try { saved = localStorage.getItem(TOKEN_KEY) || ''; } catch (e) {}
   if (saved) {
     els.token.value = saved;
+    updateTokenHint();
     connect(saved);
   } else {
+    updateTokenHint();
     setStatus(els.authStatus, '还没有连接。粘贴令牌后会自动读取句子。', '');
   }
 })();

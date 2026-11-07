@@ -291,9 +291,18 @@
 
   async function verify() {
     setStatus(els.authStatus, '正在验证令牌…');
-    var me = await api('GET', '/user');
+
+    var login = '';
+    try {
+      var me = await api('GET', '/user');
+      login = me.login || '';
+    } catch (err) {
+      // 某些 fine-grained token 不允许读 /user，不影响仓库操作
+    }
+
     var repo = await api('GET', '/repos/' + REPO);
-    setStatus(els.authStatus, '已连接：' + me.login + ' / ' + repo.full_name, 'ok');
+    setStatus(els.authStatus,
+      '已连接：' + (login ? login + ' / ' : '') + repo.full_name, 'ok');
     await load();
 
     try {

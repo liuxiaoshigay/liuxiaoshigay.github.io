@@ -23,21 +23,55 @@
 | 列表里点一条没铺进词云的句子 | 打开全屏单句视图，长句会自动换行 |
 | 右下角「重排」/ `R` | 重新抽一批、重新随机大小和位置 |
 
+## 投稿与审核
+
+### 投稿（所有人）
+
+点右上角「＋ 提一句」：
+
+- **默认**：打开站内表单，填说话人和句子，提交会跳转到 GitHub Issue（需要投稿人有 GitHub 账号）。站长在 <https://github.com/liuxiaoshigay/liuxiaoshigay.github.io/issues> 查看，审核后用管理页加入。
+- **换成腾讯问卷/问卷星**：建一个表单（字段：说话人、句子），把链接填到 `assets/js/site-config.js` 的 `submitUrl`。之后「＋ 提一句」直接打开问卷，同学不用注册 GitHub。
+
+投稿不会立即出现在词云里；只有站长通过管理页加入后才会。
+
+### 管理页（只有站长）
+
+地址：<https://liuxiaoshigay.github.io/admin.html>
+
+这个页面不在站内链接，`robots.txt` 也禁止收录；但真正的权限来自 GitHub 令牌，不是隐藏地址。
+
+1. 创建一个 **fine-grained token**：
+   - GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token
+   - Resource owner：`liuxiaoshigay`
+   - Repository access：Only select repositories → `liuxiaoshigay.github.io`
+   - Permissions → Repository permissions → **Contents: Read and write**；**Issues: Read and write**（用于读取和关闭投稿 Issue）。Metadata 自动 Read。
+2. 把 `github_pat_...` 粘到管理页，点“保存并连接”。令牌只存在这台浏览器的 `localStorage`，只发往 `api.github.com`。
+3. 在管理页添加/删除句子；上面的“待审核投稿”会列出 GitHub Issues，点“加入词云”即发布并自动关闭该 Issue。
+4. 删除只能在持有令牌的浏览器里做，访客没有入口。
+5. 每次提交后 GitHub Pages 约 1 分钟更新。
+
+> 不要用 classic token；只给这个仓库的 Contents 读写。公用电脑上用完点“清除本机令牌”；令牌泄露就去 GitHub 同页面 Revoke。
+
 ## 目录
 
 ```
 liuxiao-site/
 ├── index.html              页面本体：结构 + 全部句子
 ├── 404.html                404 页（样式内联，不依赖任何资源）
+├── admin.html              管理页（不链接在站内，只有站长用）
 ├── favicon.svg             站点图标（SVG）
 ├── site.webmanifest        PWA 清单
 ├── robots.txt
 ├── README.md
 └── assets/
-    ├── css/style.css       全部样式
+    ├── css/style.css       站点样式
+    ├── css/admin.css       管理页样式
+    ├── js/site-config.js   仓库/投稿地址等配置
+    ├── js/quote-doc.js     纯函数：解析/增删 index.html 里的句子
+    ├── js/admin.js         管理页逻辑：GitHub Contents API 增删
     ├── js/cloud-core.js    纯函数：字号范围、配色、宽度估算
     ├── js/cloud-layout.js  排版：宽屏 d3-cloud 词云 / 窄屏竖排散点
-    ├── js/app.js           交互：渲染、聚焦动画、列表、键盘
+    ├── js/app.js           交互：渲染、聚焦动画、列表、投稿入口
     ├── vendor/             d3-cloud 及其许可证
     └── img/                图标与分享图（og.png）
 ```
@@ -98,9 +132,11 @@ liuxiao-site/
 
 已做：
 
-- **DOM 级冒烟测试**（jsdom 真实解析 `index.html` 并加载四个脚本）：59 条句子 → 桌面 36 个词、手机 16 个散点；点击聚焦、点空白退出、打开列表、搜索过滤、从列表点选、未铺下句子的单句视图，全部通过。
-- 静态检查：重复 `id`、未闭合标签、本地资源引用、CSS 括号、manifest JSON。
-- 三个 JS 文件 `node --check` 通过。
+- **主页面 DOM 测试**（jsdom）：59 条句子 → 桌面 36 个词、手机 16 个散点；点击聚焦、点空白退出、打开列表、搜索过滤、从列表点选、未铺下句子的单句视图、投稿弹窗生成 GitHub Issue 链接，全部通过。
+- **管理页集成测试**（mock GitHub Contents/Issues API）：连接 → 把待审核 Issue 加入（59→60）→ 手动添加（→61）→ 删除（→60），写入内容、计数和 Issue 关闭都正确。
+- **QuoteDoc 单元测试**：59→60→59，HTML 转义、按序号删除。
+- 静态检查：重复 `id`、未闭合标签、本地资源引用、CSS 括号、manifest JSON（含 `admin.html` / `admin.css`）。
+- 6 个 JS 文件 `node --check` 通过。
 - 线上检查：首页 200、59 句、CSS/JS/图标全部 200、自定义 404 生效。
 
 未做：

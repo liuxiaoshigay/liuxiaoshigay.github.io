@@ -1,11 +1,17 @@
-# 刘骁 · 句子
+# 刘骁是gay
 
 一个只有一页的"句子词云"：所有句子随机大小、随机颜色铺在纸面上；点一句，它飞到屏幕中央放大，底部出现说话人；点空白处（或按 Esc）回到词云。
 
 - **纯静态**：HTML + CSS + 原生 JS，零构建，不需要装任何东西。唯一的外部库 d3-cloud 已经放在 `assets/vendor/` 里，不连 CDN、不请求外部字体。
 - **句子写在 HTML 里**：不执行 JS 也能看到全部句子（对 SEO 和无脚本环境友好）。
-- **窄屏自动换布局**：手机竖屏不再硬挤词云，改成"竖排散点"，保证字不会缩到 9px 看不清。
+- **窄屏自动换布局**：手机竖屏改成"竖排散点"，保证字不会缩到 9px 看不清。
 - **不丢句子**：屏幕上显示不下时，剩下的都在右下角「全部 N 句」里，可搜索、可点开单看。
+
+## 线上地址
+
+<https://liuxiaoshigay.github.io/>
+
+仓库名就是 `liuxiaoshigay.github.io`，属于 GitHub Pages 用户站，所以站点直接在根路径。
 
 ## 操作
 
@@ -73,16 +79,6 @@ liuxiao-site/
 - 随机字号范围 → `assets/js/cloud-core.js` 的 `FONT_MIN` / `FONT_MAX` / `FONT_SHRINK_*`
 - 词云铺满程度 → `assets/js/cloud-layout.js` 的 `TARGET_FILL`（越大越挤）
 
-## 换成别的名字 / 域名
-
-要改的地方：
-
-1. `index.html`：`<title>`、`<h1 class="brand__title">`、`description`、`og:*`、`canonical`
-2. `404.html`：`<title>` 和 `.brand`
-3. `site.webmanifest`：`name` / `short_name`
-4. `assets/img/` 里的 `og.png`、`icon-*.png`、`favicon.svg`：都是按"刘骁"做的图，换名字需要重做
-5. `canonical` 和 `og:image` 里现在用的是 punycode 形式 `xn--2br487o.xn--0iv.gay`（`刘骁.是.gay` 的 ASCII 写法）。换域名时记得同步，浏览器地址栏仍会显示中文。
-
 ## 配色 / 字体 / 动效
 
 - 页面底色、墨色、圆角、留白：`assets/css/style.css` 顶部的 `:root`。
@@ -92,69 +88,11 @@ liuxiao-site/
 
 ## 部署
 
-把整个 `liuxiao-site/` 目录传到任意静态托管，站点根目录指向这个目录。不需要 Node、不需要构建命令。
+当前使用 GitHub Pages 用户站：仓库名 `liuxiaoshigay.github.io`，`main` 分支根目录直接发布到 <https://liuxiaoshigay.github.io/>，不需要构建命令。
 
-### Cloudflare Pages（推荐，国内访问相对稳）
+### 其他静态托管
 
-1. 控制台 → Workers & Pages → Create → Pages → **Upload assets**
-2. 把 `liuxiao-site` 文件夹整体拖进去，Deploy
-3. 会得到一个 `xxx.pages.dev` 的地址，先把站跑起来
-4. 绑自定义域名：项目 → Custom domains → Set up a domain（前提是 `是.gay` 这个域名也在同一个 Cloudflare 账户下）
-
-### Netlify
-
-打开 <https://app.netlify.com/drop>，把文件夹拖进去即可。或用 CLI：`netlify deploy --prod --dir=liuxiao-site`。
-
-### Vercel
-
-`vercel --prod`，Framework 选 **Other**，Output Directory 填 `liuxiao-site`。
-
-### GitHub Pages
-
-推到仓库 → Settings → Pages → Deploy from a branch → 选根目录。根目录的 `404.html` 会被自动识别。
-
-### 自己的服务器（Nginx）
-
-```nginx
-server {
-    listen 443 ssl http2;
-    server_name xn--2br487o.xn--0iv.gay;
-    root /var/www/liuxiao-site;
-    index index.html;
-    error_page 404 /404.html;
-    location / { try_files $uri $uri/ =404; }
-}
-```
-
-HTTPS 用 certbot 或 Caddy 自动签。
-
-## 域名：现在还不能访问
-
-2026-11-07 实测 DNS：
-
-| 域名 | 解析 |
-| --- | --- |
-| `周彬.是.gay` | `66.154.101.210` |
-| `刘骁.是.gay` | **无记录（NXDOMAIN）** |
-
-`是.gay` 这个二级域名的 DNS 不在这个站的代码里，必须有它的控制权的人加一条记录，`https://刘骁.是.gay/` 才会通：
-
-```
-刘骁    CNAME   <你的托管域名>
-# 或
-刘骁    A       <服务器 IP>
-```
-
-Cloudflare Pages 就是 `xxx.pages.dev`；Netlify 是 `xxx.netlify.app`。加完等几分钟生效，然后验证：
-
-```powershell
-nslookup 刘骁.是.gay
-curl.exe -I https://刘骁.是.gay/
-```
-
-**如果拿不到 `是.gay` 的 DNS**：这个地址没法靠本站代码解决。可以先把站部署到 `xxx.pages.dev` 之类的免费域名，再请 `是.gay` 的所有者加记录；子域名本身不能单独购买。也可以换一个自己能控制的域名。
-
-> 小提示：在自定义域名生效前，如果直接分享 `xxx.pages.dev` 的链接，`og:image` 仍指向 `xn--2br487o.xn--0iv.gay`（还没解析），社交平台可能抓不到分享图。可以临时把 `index.html` 里 `canonical` 和 `og:url` / `og:image` 换成 `xxx.pages.dev`，域名生效后再换回来。
+把整个目录传到任意静态托管，站点根目录指向这个目录即可。Cloudflare Pages、Netlify、Vercel 都是"上传目录 → 得到临时域名"。`404.html` 放在根目录，GitHub Pages / Netlify 会自动识别。
 
 ## 已验证 / 未验证
 
@@ -163,11 +101,11 @@ curl.exe -I https://刘骁.是.gay/
 - **DOM 级冒烟测试**（jsdom 真实解析 `index.html` 并加载四个脚本）：50 条句子 → 桌面 36 个词、手机 16 个散点；点击聚焦、点空白退出、打开列表、搜索过滤、从列表点选、未铺下句子的单句视图，全部通过。
 - 静态检查：重复 `id`、未闭合标签、本地资源引用、CSS 括号、manifest JSON。
 - 三个 JS 文件 `node --check` 通过。
-- 字号与密度在 1440×900、1280×800、768×1024、390×844、360×640、320×568 上做过离屏量化。
+- 线上检查：首页 200、50 句、CSS/JS/图标全部 200、自定义 404 生效。
 
 未做：
 
-- **真浏览器截图 / 视觉回归**：这台机器的沙箱不允许启动无头浏览器（mojo 命名管道被拒）。第一次打开请重点看：桌面词云是否铺满、点击飞入是否顺滑、手机竖排是否重叠、弹层滚动是否正常、iOS Safari 的 `100dvh` 表现。
+- **真浏览器截图 / 视觉回归**（构建环境的沙箱不允许启动无头浏览器）。第一次打开请重点看：桌面词云是否铺满、点击飞入是否顺滑、手机竖排是否重叠、弹层滚动、iOS Safari 的 `100dvh`。
 - Safari 老版本、微信内置浏览器没有实测。
 
 ## 第三方
@@ -177,4 +115,4 @@ curl.exe -I https://刘骁.是.gay/
 
 ## 关于示例句子
 
-`index.html` 里的 50 句是示例文本（说话人是"数学老师""室友""我妈"这类角色），只是用来展示排版效果，换成你自己的即可。站点与 `周彬.是.gay` 在代码上没有关系，只是同一种呈现方式。
+`index.html` 里的 50 句是示例文本（说话人是"数学老师""室友""我妈"这类角色），只是用来展示排版效果，换成你自己的即可。

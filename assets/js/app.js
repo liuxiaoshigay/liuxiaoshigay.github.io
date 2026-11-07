@@ -25,6 +25,14 @@
   var soloEl = doc.getElementById('solo');
   var soloTextEl = doc.getElementById('solo-text');
   var soloWhoEl = doc.getElementById('solo-who');
+  var submitCta = doc.getElementById('submit-cta');
+  var submitDialog = doc.getElementById('submit-dialog');
+  var submitForm = doc.getElementById('submit-form');
+  var submitSpeaker = doc.getElementById('submit-speaker');
+  var submitText = doc.getElementById('submit-text');
+  var submitCopy = doc.getElementById('submit-copy');
+  var submitStatus = doc.getElementById('submit-status');
+  var submitClose = doc.getElementById('submit-close');
 
   var reduceMotion = window.matchMedia
     ? window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -572,6 +580,115 @@
     if (openListBtn) openListBtn.focus({ preventScroll: true });
   }
 
+  /* ---------- 投稿 ---------- */
+
+  function setSubmitStatus(text, kind) {
+    if (!submitStatus) return;
+    submitStatus.textContent = text || '';
+    submitStatus.className = 'submit-status' + (kind ? ' is-' + kind : '');
+  }
+
+  function openSubmit(ev) {
+    if (ev) ev.preventDefault();
+
+    var url = window.SITE_CONFIG && window.SITE_CONFIG.submitUrl;
+    if (url) {
+      window.open(url, '_blank', 'noopener');
+      return;
+    }
+
+    if (!submitDialog) return;
+    if (dialog && dialog.open) closeList();
+    if (activeEl) clearFocus();
+
+    if (typeof submitDialog.showModal === 'function') {
+      if (!submitDialog.open) submitDialog.showModal();
+    } else {
+      submitDialog.setAttribute('open', '');
+    }
+
+    setSubmitStatus('');
+    if (finePointer.matches && submitText) {
+      window.setTimeout(function () { submitText.focus(); }, 50);
+    }
+  }
+
+  function closeSubmit() {
+    if (!submitDialog) return;
+    if (typeof submitDialog.close === 'function' && submitDialog.open) {
+      submitDialog.close();
+    } else {
+      submitDialog.removeAttribute('open');
+    }
+  }
+
+  function onSubmit(ev) {
+    ev.preventDefault();
+
+    var text = submitText ? submitText.value.trim() : '';
+    var speaker = submitSpeaker ? submitSpeaker.value.trim() : '';
+
+    if (!text) {
+      setSubmitStatus('先写一句。', 'err');
+      if (submitText) submitText.focus();
+      return;
+    }
+    if (text.length > 120) {
+      setSubmitStatus('句子最多 120 字。', 'err');
+      return;
+    }
+
+    var cfg = window.SITE_CONFIG || {};
+    var repo = cfg.repo || 'liuxiaoshigay/liuxiaoshigay.github.io';
+    var title = '【投稿】' + (speaker ? speaker + '：' : '') + text.slice(0, 40);
+    var body = '说话人：' + (speaker || '（未填）') +
+      '\n句子：' + text +
+      '\n\n（来自网站投稿，请站长审核后加入）';
+    var url = 'https://github.com/' + repo + '/issues/new?title=' +
+      encodeURIComponent(title) + '&body=' + encodeURIComponent(body);
+
+    window.open(url, '_blank', 'noopener');
+    setSubmitStatus('已打开 GitHub 投稿页：登录后点 “Submit new issue” 即可。', 'ok');
+  }
+
+  function copySubmit() {
+    var text = submitText ? submitText.value.trim() : '';
+    var speaker = submitSpeaker ? submitSpeaker.value.trim() : '';
+    if (!text) {
+      setSubmitStatus('先写一句。', 'err');
+      if (submitText) submitText.focus();
+      return;
+    }
+
+    var content = '说话人：' + (speaker || '（未填）') + '\n句子：' + text;
+
+    function done() { setSubmitStatus('已复制，可以发给站长。', 'ok'); }
+
+    function fallback() {
+      var ta = doc.createElement('textarea');
+      ta.value = content;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.top = '-1000px';
+      ta.style.opacity = '0';
+      doc.body.appendChild(ta);
+      ta.select();
+      try {
+        doc.execCommand('copy');
+        done();
+      } catch (err) {
+        setSubmitStatus('复制失败，请手动选中文字。', 'err');
+      }
+      doc.body.removeChild(ta);
+    }
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(content).then(done).catch(fallback);
+    } else {
+      fallback();
+    }
+  }
+
   /* ---------- 提示与小按钮 ---------- */
 
   function hideHint() {
@@ -617,6 +734,21 @@
       soloEl.addEventListener('click', function (ev) {
         ev.stopPropagation();
         hideSolo();
+      });
+    }
+
+    if (submitCta) submitCta.addEventListener('click', openSubmit);
+    if (submitClose) {
+      submitClose.addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        closeSubmit();
+      });
+    }
+    if (submitForm) submitForm.addEventListener('submit', onSubmit);
+    if (submitCopy) submitCopy.addEventListener('click', copySubmit);
+    if (submitDialog) {
+      submitDialog.addEventListener('click', function (ev) {
+        if (ev.target === submitDialog) closeSubmit();
       });
     }
 

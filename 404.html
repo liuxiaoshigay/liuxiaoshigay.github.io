@@ -111,8 +111,22 @@
   <p class="code" aria-hidden="true"><span>4</span><span>0</span><span>4</span></p>
   <h1>这句话不见了。</h1>
   <p class="text">可能被删掉了，也可能从来没说过。</p>
-  <a class="back" href="/">回到词云</a>
+  <a class="back" id="back-link" href="/">回到词云</a>
 </main>
+
+<script>
+/* 站点可能挂在两种根路径：
+   - 自定义域名：/                         → 链接到 /
+   - GitHub Pages 项目页：/liuxiao-site/    → 链接到 /liuxiao-site/
+   换仓库名时把下面这个字符串一起改掉。 */
+(function () {
+  var path = window.location.pathname;
+  var link = document.getElementById('back-link');
+  if (link && path.indexOf('/liuxiao-site/') === 0) {
+    link.href = '/liuxiao-site/';
+  }
+})();
+</script>
 
 </body>
 </html>

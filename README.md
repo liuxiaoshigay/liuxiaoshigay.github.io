@@ -25,38 +25,32 @@
 
 ## 投稿与审核
 
-### 投稿（所有人）
+### 投稿（所有人，不需要 GitHub）
 
-点右上角「＋ 提一句」：
+点右上角「＋ 提一句」，填说话人和句子，提交后写入 Supabase 的 `submissions` 表。
 
-- **默认**：打开站内表单，填说话人和句子，提交会跳转到 GitHub Issue（需要投稿人有 GitHub 账号，Issue 是公开的）。站长在 <https://github.com/liuxiaoshigay/liuxiaoshigay.github.io/issues> 查看，审核后用管理页加入。
-- **换成腾讯问卷/问卷星**：建一个表单（字段：说话人、句子），把链接填到 `assets/js/site-config.js` 的 `submitUrl`。之后「＋ 提一句」直接打开问卷，同学不用注册 GitHub。
-
-投稿不会立即出现在词云里；只有站长通过管理页加入后才会。
+- 匿名只能 insert，**不能读取**；投稿内容不会公开。
+- 站长在管理页审核：通过后写入 `quotes` 表，访客刷新站点就能看到；忽略则删除。
+- 如果更想用腾讯问卷，把链接填到 `assets/js/site-config.js` 的 `submitUrl`，入口会直接打开问卷。
 
 ### 管理页（只有站长）
 
 地址：<https://liuxiaoshigay.github.io/admin.html>
 
-这个页面不在站内链接，`robots.txt` 也禁止收录；但真正的权限来自 GitHub 令牌，不是隐藏地址。
+权限来自 **Supabase 管理键**（初始化 SQL 最后一段设置的随机串），不是隐藏地址。
 
-1. 创建一个 **fine-grained token**：
-   - GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token
-   - Resource owner：`liuxiaoshigay`
-   - Repository access：Only select repositories → `liuxiaoshigay.github.io`
-   - Permissions → Repository permissions → **Contents: Read and write**；**Issues: Read and write**（用于读取和关闭投稿 Issue）。Metadata 自动 Read。
-2. 把 `github_pat_...` 粘到管理页，点“保存并连接”。令牌只存在这台浏览器的 `localStorage`，只发往 `api.github.com`。
-3. 在管理页添加/删除句子；上面的“待审核投稿”会列出 GitHub Issues，点“加入词云”即发布并自动关闭该 Issue。
-4. 删除只能在持有令牌的浏览器里做，访客没有入口。
-5. 每次提交后 GitHub Pages 约 1 分钟更新。
+1. 管理键只存在本机的 `localStorage`，只发给你的 Supabase 项目。
+2. 粘贴 → **保存并连接**。
+3. 「待审核投稿」可以 **通过 / 忽略**；「已上线的动态句子」可以手动添加、删除。
+4. 访客没有删除入口；管理键泄露就在 SQL 里换一个新的（见管理页里的说明）。
 
-> 不要用 classic token；只给这个仓库的 Contents 读写。公用电脑上用完点“清除本机令牌”；令牌泄露就去 GitHub 同页面 Revoke。
+> 静态的 59 句仍在 `index.html` 里，管理页只管**动态新增**的句子。要删静态句，改文件或告诉站长。
 
 ## 目录
 
 ```
 liuxiao-site/
-├── index.html              页面本体：结构 + 全部句子
+├── index.html              页面本体：结构 + 59 句静态句子
 ├── 404.html                404 页（样式内联，不依赖任何资源）
 ├── admin.html              管理页（不链接在站内，只有站长用）
 ├── favicon.svg             站点图标（SVG）
@@ -66,12 +60,12 @@ liuxiao-site/
 └── assets/
     ├── css/style.css       站点样式
     ├── css/admin.css       管理页样式
-    ├── js/site-config.js   仓库/投稿地址等配置
-    ├── js/quote-doc.js     纯函数：解析/增删 index.html 里的句子
-    ├── js/admin.js         管理页逻辑：GitHub Contents API 增删
+    ├── js/site-config.js   Supabase URL / anon key / 可选问卷地址
+    ├── js/quote-doc.js     旧版静态编辑工具（当前不使用）
+    ├── js/admin.js         管理页：Supabase 管理键 + RPC
     ├── js/cloud-core.js    纯函数：字号范围、配色、宽度估算
     ├── js/cloud-layout.js  排版：宽屏 d3-cloud 词云 / 窄屏竖排散点
-    ├── js/app.js           交互：渲染、聚焦动画、列表、投稿入口
+    ├── js/app.js           交互：渲染、聚焦动画、列表、投稿
     ├── vendor/             d3-cloud 及其许可证
     └── img/                图标与分享图（og.png）
 ```
@@ -132,12 +126,11 @@ liuxiao-site/
 
 已做：
 
-- **主页面 DOM 测试**（jsdom）：59 条句子 → 桌面 36 个词、手机 16 个散点；点击聚焦、点空白退出、打开列表、搜索过滤、从列表点选、未铺下句子的单句视图、投稿弹窗生成 GitHub Issue 链接，全部通过。
-- **管理页集成测试**（mock GitHub Contents/Issues API）：连接 → 把待审核 Issue 加入（59→60）→ 手动添加（→61）→ 删除（→60），写入内容、计数和 Issue 关闭都正确。
-- **QuoteDoc 单元测试**：59→60→59，HTML 转义、按序号删除。
+- **主页面 DOM 测试**（jsdom，mock Supabase）：59 条静态 + 1 条动态 → 60 句；桌面 36 个词、手机 16 个散点；点击聚焦、点空白退出、打开列表、搜索过滤、单句视图、投稿 POST 到 `submissions`，全部通过。
+- **管理页集成测试**（mock Supabase REST/RPC）：连接 → 通过待审核（1→2）→ 手动添加（→3）→ 删除（→2），RPC 都正确。
 - 静态检查：重复 `id`、未闭合标签、本地资源引用、CSS 括号、manifest JSON（含 `admin.html` / `admin.css`）。
 - 6 个 JS 文件 `node --check` 通过。
-- 线上检查：首页 200、59 句、CSS/JS/图标全部 200、自定义 404 生效。
+- 线上检查：首页 / 管理页 / 资源 200；Supabase 配置后还需要用一条真实投稿跑一遍待审核 → 通过 → 站点显示。
 
 未做：
 
@@ -151,4 +144,4 @@ liuxiao-site/
 
 ## 关于句子
 
-`index.html` 里现在有 59 句：50 句是示例文本（说话人是"数学老师""室友""我妈"这类角色），另外 9 句来自 `名人名言.docx`（说话人是学明、徐历、学生、市西、周家宏、羊家儿、徐思为）。换成你自己的即可。
+`index.html` 里现在有 59 句静态：50 句示例文本（说话人是"数学老师""室友""我妈"这类角色），另外 9 句来自 `名人名言.docx`（说话人是学明、徐历、学生、市西、周家宏、羊家儿、徐思为）。之后通过投稿/管理页新增的句子在 Supabase 的 `quotes` 表里，不在 HTML 里。

@@ -1,11 +1,11 @@
-/* 站点配置：两个页面共用。改仓库/投稿地址只需要改这里。 */
+/* 站点配置：主页面、管理页共用。 */
 window.SITE_CONFIG = {
-  repo: 'liuxiaoshigay/liuxiaoshigay.github.io',
-  branch: 'main',
   siteUrl: 'https://liuxiaoshigay.github.io/',
 
-  /* 投稿入口：
-     - 留空：站内弹出表单，提交时打开 GitHub Issue（需要投稿人有 GitHub 账号）
-     - 填腾讯问卷/问卷星等链接：点「提一句」直接打开该问卷（不需要 GitHub 账号） */
+  /* Supabase 项目（Project Settings → API） */
+  supabaseUrl: 'https://vavvffjixemkjxazuhdj.supabase.co',
+  supabaseAnonKey: 'sb_publishable_7Gdxq4m0qKIn1lYB2a8L7w_v1tQOBxt',
+
+  /* 可选：外部投稿表单。填了之后「＋ 提一句」直接打开它，不走站内表单。 */
   submitUrl: ''
 };

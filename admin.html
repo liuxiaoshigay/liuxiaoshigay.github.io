@@ -35,6 +35,9 @@
       <input id="token-input" type="password" autocomplete="off" spellcheck="false"
              placeholder="github_pat_...">
     </label>
+    <p id="token-hint" class="token-hint"></p>
+    <label class="check"><input id="show-token" type="checkbox"> 显示令牌</label>
+    <p class="token-create muted">还没有令牌？<a href="https://github.com/settings/tokens?type=beta" target="_blank" rel="noopener">去 GitHub 创建一个 Fine-grained token</a></p>
     <div class="actions">
       <button id="save-token" class="btn btn--primary" type="button">保存并连接</button>
       <button id="clear-token" class="btn" type="button">清除本机令牌</button>

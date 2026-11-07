@@ -29,7 +29,7 @@
 
 点右上角「＋ 提一句」：
 
-- **默认**：打开站内表单，填说话人和句子，提交会跳转到 GitHub Issue（需要投稿人有 GitHub 账号）。站长在 <https://github.com/liuxiaoshigay/liuxiaoshigay.github.io/issues> 查看，审核后用管理页加入。
+- **默认**：打开站内表单，填说话人和句子，提交会跳转到 GitHub Issue（需要投稿人有 GitHub 账号，Issue 是公开的）。站长在 <https://github.com/liuxiaoshigay/liuxiaoshigay.github.io/issues> 查看，审核后用管理页加入。
 - **换成腾讯问卷/问卷星**：建一个表单（字段：说话人、句子），把链接填到 `assets/js/site-config.js` 的 `submitUrl`。之后「＋ 提一句」直接打开问卷，同学不用注册 GitHub。
 
 投稿不会立即出现在词云里；只有站长通过管理页加入后才会。

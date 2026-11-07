@@ -33,6 +33,10 @@
   <h1 class="brand__title">刘骁是gay</h1>
 </header>
 
+<a class="submit-cta" id="submit-cta"
+   href="https://github.com/liuxiaoshigay/liuxiaoshigay.github.io/issues/new"
+   target="_blank" rel="noopener">＋ 提一句</a>
+
 <main class="stage">
   <div id="cloud" class="cloud" aria-hidden="true"></div>
 
@@ -135,6 +139,31 @@
   <p class="solo__hint">点击任意处返回</p>
 </div>
 
+<dialog id="submit-dialog" class="sheet submit-sheet" aria-labelledby="submit-title">
+  <form id="submit-form" class="submit-form">
+    <div class="sheet__head">
+      <h2 id="submit-title" class="sheet__title">提一句</h2>
+      <button id="submit-close" class="sheet__close" type="button" aria-label="关闭">✕</button>
+    </div>
+    <p class="submit-note">投给站长审核，通过后才会出现在词云里。</p>
+    <label class="submit-field">
+      <span>说话人（可留空）</span>
+      <input id="submit-speaker" type="text" maxlength="20" autocomplete="off">
+    </label>
+    <label class="submit-field">
+      <span>句子（最多 120 字）</span>
+      <textarea id="submit-text" rows="3" maxlength="120" required></textarea>
+    </label>
+    <div class="submit-actions">
+      <button class="submit-btn submit-btn--primary" type="submit">提交</button>
+      <button id="submit-copy" class="submit-btn" type="button">复制内容</button>
+    </div>
+    <p id="submit-status" class="submit-status" role="status"></p>
+    <p class="submit-foot">提交会打开 GitHub Issue，需要 GitHub 账号；没有账号可以点“复制内容”发给站长。</p>
+  </form>
+</dialog>
+
+<script src="assets/js/site-config.js" defer></script>
 <script src="assets/vendor/d3-cloud.min.js" defer></script>
 <script src="assets/js/cloud-core.js" defer></script>
 <script src="assets/js/cloud-layout.js" defer></script>

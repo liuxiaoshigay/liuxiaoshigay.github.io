@@ -1,21 +1,23 @@
-/* 管理页逻辑：用本机保存的 GitHub fine-grained token 读写 index.html。
-   令牌只发往 api.github.com；页面本身不链接在站内。 */
+/* 管理页：Supabase 管理键 + 待审核 / 动态句子。 */
 (function () {
   'use strict';
 
   var cfg = window.SITE_CONFIG || {};
-  var REPO = cfg.repo || 'liuxiaoshigay/liuxiaoshigay.github.io';
-  var BRANCH = cfg.branch || 'main';
-  var TOKEN_KEY = 'liuxiao:admin-token';
+  var BASE = String(cfg.supabaseUrl || '').replace(/\/+$/, '');
+  var ANON = cfg.supabaseAnonKey || '';
+  var KEY_STORE = 'liuxiao:supabase-admin-key';
 
   var els = {
-    token: document.getElementById('token-input'),
-    hint: document.getElementById('token-hint'),
-    showToken: document.getElementById('show-token'),
-    save: document.getElementById('save-token'),
-    clear: document.getElementById('clear-token'),
+    siteLink: document.getElementById('site-link'),
+    configStatus: document.getElementById('config-status'),
+    key: document.getElementById('admin-key'),
+    keyHint: document.getElementById('key-hint'),
+    showKey: document.getElementById('show-key'),
+    saveKey: document.getElementById('save-key'),
+    clearKey: document.getElementById('clear-key'),
     authStatus: document.getElementById('auth-status'),
     editor: document.getElementById('editor-panel'),
+    review: document.getElementById('review-panel'),
     count: document.getElementById('quote-count'),
     reload: document.getElementById('reload'),
     form: document.getElementById('add-form'),
@@ -23,36 +25,17 @@
     text: document.getElementById('text-input'),
     status: document.getElementById('status'),
     list: document.getElementById('quote-list'),
-    issues: document.getElementById('issues-link'),
-    review: document.getElementById('review-panel'),
-    issuesStatus: document.getElementById('issues-status'),
-    issueList: document.getElementById('issue-list'),
-    refreshIssues: document.getElementById('refresh-issues')
+    pendingStatus: document.getElementById('pending-status'),
+    pendingList: document.getElementById('pending-list'),
+    refreshPending: document.getElementById('refresh-pending')
   };
 
-  var state = {
-    token: '',
-    sha: '',
-    html: '',
-    doc: null,
-    issues: [],
-    busy: false
-  };
+  var state = { key: '', quotes: [], pending: [], busy: false };
 
-  els.issues.href = 'https://github.com/' + REPO + '/issues';
+  if (els.siteLink && cfg.siteUrl) els.siteLink.href = cfg.siteUrl;
 
-  function b64encode(text) {
-    var bytes = new TextEncoder().encode(text);
-    var bin = '';
-    for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
-    return btoa(bin);
-  }
-
-  function b64decode(b64) {
-    var bin = atob(String(b64).replace(/\s/g, ''));
-    var bytes = new Uint8Array(bin.length);
-    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-    return new TextDecoder().decode(bytes);
+  function configured() {
+    return !!(BASE && ANON);
   }
 
   function setStatus(el, text, kind) {
@@ -61,59 +44,87 @@
     el.className = 'status' + (kind ? ' is-' + kind : '');
   }
 
-  function tokenKind(t) {
-    if (t.indexOf('github_pat_') === 0) return 'fine-grained';
-    if (t.indexOf('ghp_') === 0) return 'classic';
-    if (t.indexOf('gho_') === 0) return 'OAuth';
-    return '未知类型';
-  }
-
-  function updateTokenHint() {
-    if (!els.hint) return;
-    var t = els.token.value.trim();
-    if (!t) {
-      els.hint.textContent = '';
+  function keyHint() {
+    if (!els.keyHint) return;
+    var value = els.key.value.trim();
+    if (!value) {
+      els.keyHint.textContent = '';
       return;
     }
-    var s = '已输入 ' + t.length + ' 个字符 · ' + tokenKind(t);
-    if (t.length < 30) s += ' · 看起来不完整';
-    els.hint.textContent = s;
+    var text = '已输入 ' + value.length + ' 个字符';
+    if (value.length < 20) text += ' · 看起来太短';
+    els.keyHint.textContent = text;
   }
 
-  async function api(method, path, body) {
-    var headers = {
-      'Authorization': 'Bearer ' + state.token,
-      'Accept': 'application/vnd.github+json'
-    };
-    if (body) headers['Content-Type'] = 'application/json';
+  function fmtTime(value) {
+    if (!value) return '';
+    var date = new Date(value);
+    if (isNaN(date.getTime())) {
+      var n = Number(value);
+      if (!n) return '';
+      date = new Date(n);
+    }
+    try {
+      return date.toLocaleString('zh-CN', { hour12: false });
+    } catch (err) {
+      return '';
+    }
+  }
 
-    var res = await fetch('https://api.github.com' + path, {
-      method: method,
+  async function sb(path, options) {
+    var opts = options || {};
+    var headers = {
+      'apikey': ANON,
+      'Authorization': 'Bearer ' + ANON
+    };
+    if (opts.body) headers['Content-Type'] = 'application/json';
+    if (opts.headers) Object.assign(headers, opts.headers);
+
+    var res = await fetch(BASE + path, {
+      method: opts.method || 'GET',
       headers: headers,
-      body: body ? JSON.stringify(body) : undefined
+      body: opts.body
     });
 
-    var data = {};
-    try { data = await res.json(); } catch (err) {}
+    var text = await res.text();
+    var data = null;
+    if (text) {
+      try { data = JSON.parse(text); } catch (err) { data = text; }
+    }
 
     if (!res.ok) {
-      var e = new Error(data.message || ('HTTP ' + res.status));
-      e.status = res.status;
-      throw e;
+      var message = (data && (data.message || data.error)) || ('HTTP ' + res.status);
+      var error = new Error(String(message));
+      error.status = res.status;
+      throw error;
     }
     return data;
   }
 
-  function setEditor(show) {
+  function rpc(name, body) {
+    return sb('/rest/v1/rpc/' + name, {
+      method: 'POST',
+      body: JSON.stringify(body)
+    });
+  }
+
+  function showPanels(show) {
     els.editor.hidden = !show;
     els.review.hidden = !show;
   }
 
-  function render() {
-    els.count.textContent = String(state.doc.count);
+  function metaLine(item) {
+    var parts = [];
+    if (item.speaker) parts.push('—— ' + item.speaker);
+    if (item.created_at) parts.push(fmtTime(item.created_at));
+    return parts.join(' · ');
+  }
+
+  function renderQuotes() {
+    els.count.textContent = String(state.quotes.length);
     els.list.textContent = '';
 
-    state.doc.items.forEach(function (item, index) {
+    state.quotes.forEach(function (item) {
       var li = document.createElement('li');
       var main = document.createElement('div');
       main.className = 'quote-row__main';
@@ -123,18 +134,16 @@
       text.textContent = item.text;
       main.appendChild(text);
 
-      if (item.speaker) {
-        var who = document.createElement('p');
-        who.className = 'quote-row__who';
-        who.textContent = '—— ' + item.speaker;
-        main.appendChild(who);
-      }
+      var meta = document.createElement('p');
+      meta.className = 'quote-row__who';
+      meta.textContent = metaLine(item);
+      if (meta.textContent) main.appendChild(meta);
 
       var del = document.createElement('button');
       del.type = 'button';
       del.className = 'btn btn--danger';
       del.textContent = '删除';
-      del.addEventListener('click', function () { removeAt(index); });
+      del.addEventListener('click', function () { removeQuote(item); });
 
       li.appendChild(main);
       li.appendChild(del);
@@ -142,53 +151,10 @@
     });
   }
 
-  async function load() {
-    setStatus(els.status, '正在读取 index.html…');
-    var file = await api(
-      'GET',
-      '/repos/' + REPO + '/contents/index.html?ref=' + encodeURIComponent(BRANCH)
-    );
-    state.sha = file.sha;
-    state.html = b64decode(file.content);
-    state.doc = window.QuoteDoc.parse(state.html);
-    render();
-    setEditor(true);
-    setStatus(els.status, '已读取 ' + state.doc.count + ' 句。', 'ok');
-  }
+  function renderPending() {
+    els.pendingList.textContent = '';
 
-  async function saveHtml(next, message) {
-    var data = await api('PUT', '/repos/' + REPO + '/contents/index.html', {
-      message: message,
-      content: b64encode(next),
-      sha: state.sha,
-      branch: BRANCH
-    });
-    state.html = next;
-    state.sha = data.content.sha;
-    state.doc = window.QuoteDoc.parse(next);
-    render();
-    setStatus(els.status, '已提交；GitHub Pages 约 1 分钟后更新。', 'ok');
-  }
-
-  function parseIssue(issue) {
-    var body = String(issue.body || '').replace(/\r\n/g, '\n');
-    var sm = /说话人[：:]\s*(.+)/.exec(body);
-    var qm = /句子[：:]\s*([\s\S]+?)(?:\n\s*\n|$)/.exec(body);
-    var speaker = sm ? sm[1].trim() : '';
-    var text = qm ? qm[1].trim() : '';
-
-    if (speaker === '（未填）' || speaker === '(未填)') speaker = '';
-    if (!text) {
-      text = String(issue.title || '').replace(/^【投稿】/, '').trim();
-    }
-    return { speaker: speaker, text: text };
-  }
-
-  function renderIssues() {
-    els.issueList.textContent = '';
-
-    state.issues.forEach(function (issue) {
-      var parsed = parseIssue(issue);
+    state.pending.forEach(function (item) {
       var li = document.createElement('li');
       li.className = 'issue-row';
 
@@ -197,250 +163,189 @@
 
       var text = document.createElement('p');
       text.className = 'issue-row__text';
-      text.textContent = parsed.text || issue.title || '(空)';
+      text.textContent = item.text;
       main.appendChild(text);
 
       var meta = document.createElement('p');
       meta.className = 'issue-row__meta';
-      meta.textContent = '#' + issue.number + ' · ' +
-        (issue.user && issue.user.login ? issue.user.login : '?') +
-        (parsed.speaker ? ' · —— ' + parsed.speaker : '');
-      main.appendChild(meta);
-
-      if (issue.html_url) {
-        var link = document.createElement('a');
-        link.className = 'issue-row__link';
-        link.href = issue.html_url;
-        link.target = '_blank';
-        link.rel = 'noopener';
-        link.textContent = '查看 Issue';
-        main.appendChild(link);
-      }
+      meta.textContent = metaLine(item);
+      if (meta.textContent) main.appendChild(meta);
 
       var actions = document.createElement('div');
       actions.className = 'issue-row__actions';
 
-      var add = document.createElement('button');
-      add.type = 'button';
-      add.className = 'btn btn--primary';
-      add.textContent = '加入词云';
-      add.disabled = !parsed.text;
-      add.addEventListener('click', function () { acceptIssue(issue); });
+      var ok = document.createElement('button');
+      ok.type = 'button';
+      ok.className = 'btn btn--primary';
+      ok.textContent = '通过';
+      ok.addEventListener('click', function () { approve(item); });
 
-      var close = document.createElement('button');
-      close.type = 'button';
-      close.className = 'btn btn--danger';
-      close.textContent = '关闭';
-      close.addEventListener('click', function () { dismissIssue(issue); });
+      var no = document.createElement('button');
+      no.type = 'button';
+      no.className = 'btn btn--danger';
+      no.textContent = '忽略';
+      no.addEventListener('click', function () { ignore(item); });
 
-      actions.appendChild(add);
-      actions.appendChild(close);
+      actions.appendChild(ok);
+      actions.appendChild(no);
       li.appendChild(main);
       li.appendChild(actions);
-      els.issueList.appendChild(li);
+      els.pendingList.appendChild(li);
     });
   }
 
-  async function loadIssues() {
-    setStatus(els.issuesStatus, '正在读取投稿…');
-    var list = await api(
-      'GET',
-      '/repos/' + REPO + '/issues?state=open&per_page=50&sort=created&direction=desc'
-    );
-
-    state.issues = (Array.isArray(list) ? list : []).filter(function (issue) {
-      return !issue.pull_request;
-    });
-
-    renderIssues();
-    var n = state.issues.length;
-    setStatus(els.issuesStatus,
-      n ? ('共 ' + n + ' 条待审核。') : '暂时没有待审核投稿。', 'ok');
+  async function loadQuotes() {
+    var rows = await sb('/rest/v1/quotes?select=id,speaker,text,created_at&order=created_at.asc');
+    state.quotes = Array.isArray(rows) ? rows : [];
+    renderQuotes();
   }
 
-  async function closeIssue(issue) {
-    await api('PATCH', '/repos/' + REPO + '/issues/' + issue.number, { state: 'closed' });
+  async function loadPending() {
+    var rows = await rpc('list_submissions', { admin_key: state.key });
+    state.pending = Array.isArray(rows) ? rows : [];
+    renderPending();
+    setStatus(els.pendingStatus,
+      state.pending.length ? ('共 ' + state.pending.length + ' 条待审核。') : '暂时没有待审核投稿。',
+      'ok');
   }
 
-  async function acceptIssue(issue) {
-    if (state.busy || !state.doc) return;
-
-    var parsed = parseIssue(issue);
-    if (!parsed.text) {
-      setStatus(els.issuesStatus, '这条 Issue 里没解析出句子。', 'err');
-      return;
-    }
-
-    state.busy = true;
-    setStatus(els.issuesStatus, '正在加入…');
-    try {
-      var next = window.QuoteDoc.add(state.html, parsed.speaker, parsed.text);
-      await saveHtml(next, 'Add submission #' + issue.number);
-
-      var closed = true;
-      try { await closeIssue(issue); } catch (err) { closed = false; }
-
-      await loadIssues();
-      setStatus(els.issuesStatus,
-        closed ? ('已加入并关闭 Issue #' + issue.number) :
-                 ('句子已加入，但关闭 Issue 失败，请手动关闭 #' + issue.number),
-        closed ? 'ok' : 'warn');
-    } catch (err) {
-      setStatus(els.issuesStatus, '加入失败：' + err.message, 'err');
-      if (err.status === 409) { try { await load(); } catch (e) {} }
-    } finally {
-      state.busy = false;
-    }
+  async function loadAll() {
+    await Promise.all([loadQuotes(), loadPending()]);
+    showPanels(true);
   }
 
-  async function dismissIssue(issue) {
+  async function removeQuote(item) {
     if (state.busy) return;
-    if (!window.confirm('不加入这句，并关闭 Issue #' + issue.number + '？')) return;
-
-    state.busy = true;
-    setStatus(els.issuesStatus, '正在关闭…');
-    try {
-      await closeIssue(issue);
-      await loadIssues();
-      setStatus(els.issuesStatus, '已关闭 Issue #' + issue.number, 'ok');
-    } catch (err) {
-      setStatus(els.issuesStatus, '关闭失败：' + err.message, 'err');
-    } finally {
-      state.busy = false;
-    }
-  }
-
-  async function verify() {
-    setStatus(els.authStatus, '正在验证令牌…');
-
-    var login = '';
-    try {
-      var me = await api('GET', '/user');
-      login = me.login || '';
-    } catch (err) {
-      // 某些 fine-grained token 不允许读 /user，不影响仓库操作
-    }
-
-    var repo = await api('GET', '/repos/' + REPO);
-    setStatus(els.authStatus,
-      '已连接：' + (login ? login + ' / ' : '') + repo.full_name, 'ok');
-    await load();
-
-    try {
-      await loadIssues();
-    } catch (err) {
-      setStatus(els.issuesStatus,
-        '读取 Issues 失败：' + err.message + '（令牌需要 Issues 读权限）', 'err');
-    }
-  }
-
-  async function connect(token) {
-    state.token = token;
-    try {
-      await verify();
-      try { localStorage.setItem(TOKEN_KEY, token); } catch (e) {}
-    } catch (err) {
-      state.token = '';
-      setEditor(false);
-
-      var msg;
-      if (err.status === 401) {
-        try { localStorage.removeItem(TOKEN_KEY); } catch (e) {}
-        msg = '连接失败：令牌无效（Bad credentials）。请确认完整复制、未过期；' +
-              'fine-grained token 应以 github_pat_ 开头，通常 90 个字符以上。';
-      } else if (err.status === 404) {
-        msg = '连接失败：令牌看不到这个仓库。请确认 Repository access 勾了 liuxiaoshigay.github.io。';
-      } else if (err.status === 403) {
-        msg = '连接失败：权限不足（' + err.message + '）。请确认 Contents 和 Issues 都是 Read and write。';
-      } else {
-        msg = '连接失败：' + err.message;
-      }
-      setStatus(els.authStatus, msg, 'err');
-    }
-  }
-
-  async function removeAt(index) {
-    if (state.busy || !state.doc) return;
-    var item = state.doc.items[index];
-    if (!item) return;
     if (!window.confirm('确定删除这一句？\n\n' + item.text)) return;
 
     state.busy = true;
     setStatus(els.status, '正在删除…');
     try {
-      var next = window.QuoteDoc.removeAt(state.html, index);
-      await saveHtml(next, 'Delete quote via admin');
+      await rpc('delete_quote', { quote_id: item.id, admin_key: state.key });
+      await loadQuotes();
+      setStatus(els.status, '已删除。', 'ok');
     } catch (err) {
       setStatus(els.status, '删除失败：' + err.message, 'err');
-      if (err.status === 409) { try { await load(); } catch (e) {} }
     } finally {
       state.busy = false;
     }
   }
 
-  els.save.addEventListener('click', function () {
-    var token = els.token.value.trim()
-      .replace(/^["']|["']$/g, '')
-      .replace(/^(Bearer|token)\s+/i, '')
-      .trim();
+  async function approve(item) {
+    if (state.busy) return;
 
-    if (!token) {
-      setStatus(els.authStatus, '先粘贴 Fine-grained token。', 'err');
+    state.busy = true;
+    setStatus(els.pendingStatus, '正在通过…');
+    try {
+      await rpc('approve_submission', { submission_id: item.id, admin_key: state.key });
+      await loadAll();
+      setStatus(els.pendingStatus, '已通过并上线。', 'ok');
+    } catch (err) {
+      setStatus(els.pendingStatus, '通过失败：' + err.message, 'err');
+    } finally {
+      state.busy = false;
+    }
+  }
+
+  async function ignore(item) {
+    if (state.busy) return;
+    if (!window.confirm('不通过这一句？\n\n' + item.text)) return;
+
+    state.busy = true;
+    setStatus(els.pendingStatus, '正在忽略…');
+    try {
+      await rpc('delete_submission', { submission_id: item.id, admin_key: state.key });
+      await loadPending();
+      setStatus(els.pendingStatus, '已忽略。', 'ok');
+    } catch (err) {
+      setStatus(els.pendingStatus, '忽略失败：' + err.message, 'err');
+    } finally {
+      state.busy = false;
+    }
+  }
+
+  async function connect(key) {
+    state.key = key;
+    setStatus(els.authStatus, '正在验证管理键…');
+
+    try {
+      await loadAll();
+      try { localStorage.setItem(KEY_STORE, key); } catch (err) {}
+      setStatus(els.authStatus, '已连接 Supabase。', 'ok');
+    } catch (err) {
+      state.key = '';
+      showPanels(false);
+
+      if (err.status === 400 || err.status === 401) {
+        setStatus(els.authStatus,
+          '管理键不对（' + err.message + '）。请用 SQL 里设置的那串。', 'err');
+      } else {
+        setStatus(els.authStatus, '连接失败：' + err.message, 'err');
+      }
+    }
+  }
+
+  els.saveKey.addEventListener('click', function () {
+    if (!configured()) {
+      setStatus(els.authStatus, '站点还没配置 Supabase URL / anon key。', 'err');
       return;
     }
-
-    els.token.value = token;
-    updateTokenHint();
-    connect(token);
+    var key = els.key.value.trim();
+    if (!key) {
+      setStatus(els.authStatus, '先粘贴管理键。', 'err');
+      return;
+    }
+    connect(key);
   });
 
-  els.token.addEventListener('input', updateTokenHint);
+  els.key.addEventListener('input', keyHint);
+  els.key.addEventListener('keydown', function (ev) {
+    if (ev.key === 'Enter') {
+      ev.preventDefault();
+      els.saveKey.click();
+    }
+  });
 
-  if (els.showToken) {
-    els.showToken.addEventListener('change', function () {
-      els.token.type = this.checked ? 'text' : 'password';
+  if (els.showKey) {
+    els.showKey.addEventListener('change', function () {
+      els.key.type = this.checked ? 'text' : 'password';
     });
   }
 
-  els.token.addEventListener('keydown', function (ev) {
-    if (ev.key === 'Enter') {
-      ev.preventDefault();
-      els.save.click();
-    }
-  });
-
-  els.clear.addEventListener('click', function () {
-    try { localStorage.removeItem(TOKEN_KEY); } catch (e) {}
-    state.token = '';
-    state.sha = '';
-    state.html = '';
-    state.doc = null;
-    state.issues = [];
-    els.token.value = '';
-    if (els.issueList) els.issueList.textContent = '';
-    setEditor(false);
-    setStatus(els.authStatus, '已清除本机令牌。', 'ok');
+  els.clearKey.addEventListener('click', function () {
+    try { localStorage.removeItem(KEY_STORE); } catch (err) {}
+    state.key = '';
+    state.quotes = [];
+    state.pending = [];
+    els.key.value = '';
+    keyHint();
+    els.list.textContent = '';
+    els.pendingList.textContent = '';
+    showPanels(false);
+    setStatus(els.authStatus, '已清除本机管理键。', 'ok');
     setStatus(els.status, '');
-    setStatus(els.issuesStatus, '');
-  });
-
-  els.refreshIssues.addEventListener('click', function () {
-    if (!state.token) return;
-    loadIssues().catch(function (err) {
-      setStatus(els.issuesStatus, '读取失败：' + err.message, 'err');
-    });
+    setStatus(els.pendingStatus, '');
   });
 
   els.reload.addEventListener('click', function () {
-    if (!state.token) return;
-    load().catch(function (err) {
+    if (!state.key) return;
+    loadAll().then(function () {
+      setStatus(els.status, '已重新读取。', 'ok');
+    }).catch(function (err) {
       setStatus(els.status, '读取失败：' + err.message, 'err');
+    });
+  });
+
+  els.refreshPending.addEventListener('click', function () {
+    if (!state.key) return;
+    loadPending().catch(function (err) {
+      setStatus(els.pendingStatus, '读取失败：' + err.message, 'err');
     });
   });
 
   els.form.addEventListener('submit', async function (ev) {
     ev.preventDefault();
-    if (state.busy || !state.doc) return;
+    if (state.busy || !state.key) return;
 
     var text = els.text.value.trim();
     var speaker = els.speaker.value.trim();
@@ -451,29 +356,42 @@
     }
 
     state.busy = true;
-    setStatus(els.status, '正在提交…');
+    setStatus(els.status, '正在添加…');
     try {
-      var next = window.QuoteDoc.add(state.html, speaker, text);
-      await saveHtml(next, 'Add quote via admin');
+      await rpc('add_quote', {
+        speaker: speaker,
+        quote_text: text,
+        admin_key: state.key
+      });
+      await loadQuotes();
       els.text.value = '';
       els.speaker.value = '';
-      setStatus(els.status, '已添加并发布：' + text, 'ok');
+      setStatus(els.status, '已添加并上线。', 'ok');
     } catch (err) {
-      setStatus(els.status, '提交失败：' + err.message, 'err');
-      if (err.status === 409) { try { await load(); } catch (e) {} }
+      setStatus(els.status, '添加失败：' + err.message, 'err');
     } finally {
       state.busy = false;
     }
   });
 
+  if (!configured()) {
+    setStatus(els.configStatus,
+      '还没有配置 Supabase：请在 assets/js/site-config.js 里填 supabaseUrl 和 supabaseAnonKey。',
+      'err');
+    setStatus(els.authStatus, '配置完成后再回来连接。', '');
+    return;
+  }
+
+  setStatus(els.configStatus, 'Supabase：' + BASE, 'ok');
+
   var saved = '';
-  try { saved = localStorage.getItem(TOKEN_KEY) || ''; } catch (e) {}
+  try { saved = localStorage.getItem(KEY_STORE) || ''; } catch (err) {}
   if (saved) {
-    els.token.value = saved;
-    updateTokenHint();
+    els.key.value = saved;
+    keyHint();
     connect(saved);
   } else {
-    updateTokenHint();
-    setStatus(els.authStatus, '还没有连接。粘贴令牌后会自动读取句子。', '');
+    keyHint();
+    setStatus(els.authStatus, '还没有连接。粘贴管理键后会自动读取。', '');
   }
 })();

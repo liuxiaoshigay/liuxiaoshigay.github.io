@@ -1,0 +1,561 @@
+/* ==========================================================================
+   刘骁 · 句子
+   配色、字体、间距都在 :root；想换风格改这里就够。
+   ========================================================================== */
+
+:root {
+  --paper: #faf9f7;
+  --paper-hi: #fffefc;
+  --ink: #23211e;
+  --ink-soft: #4f4a43;
+  --muted: #8d8579;
+  --line: rgba(35, 33, 30, .14);
+  --halo: rgba(250, 249, 247, .92);
+
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+          "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC",
+          "Source Han Sans SC", sans-serif;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+          "Liberation Mono", monospace;
+
+  --edge-x: max(24px, env(safe-area-inset-left));
+  --edge-y: max(22px, env(safe-area-inset-top));
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(120% 85% at 50% -25%, #fffefc 0%, rgba(255, 254, 252, 0) 58%),
+    radial-gradient(95% 70% at 50% 118%, #f1ede4 0%, rgba(241, 237, 228, 0) 62%),
+    var(--paper);
+  color: var(--ink);
+  font-family: var(--font);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+[hidden] { display: none !important; }
+
+::selection { background: rgba(35, 33, 30, .14); }
+
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* ---------- 词云 ---------- */
+
+.cloud {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+}
+
+.cloud svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.cloud text {
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transform-origin: 0 0;
+  transition: opacity .45s ease, fill .25s ease;
+}
+
+.cloud text:hover { opacity: .62; }
+
+.cloud.is-focused text { opacity: .07; }
+.cloud.is-focused text.is-active { opacity: 1; }
+.cloud.is-focused text.is-active:hover { opacity: 1; }
+
+/* 压暗的句子不再是点击目标：点哪里都等于"退出聚焦" */
+.cloud.is-focused text:not(.is-active) { pointer-events: none; }
+
+/* 悬停放大放在外层 <g> 上：内层 <text> 的 transform 归 JS 动画专用，
+   两层分开，CSS 就永远不会打断正在飞的动画 */
+.cloud:not(.is-focused) g.word {
+  transition: transform .2s cubic-bezier(.2, .7, .2, 1);
+}
+
+.cloud:not(.is-focused) g.word:hover {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  transform: scale(1.06);
+}
+
+@keyframes word-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ---------- 角落里的字 ---------- */
+
+.brand {
+  position: fixed;
+  top: var(--edge-y);
+  left: var(--edge-x);
+  z-index: 3;
+  pointer-events: none;
+}
+
+.brand__title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: .18em;
+  color: var(--ink-soft);
+  text-shadow: 0 0 14px var(--halo), 0 0 5px var(--halo);
+}
+
+.brand__dot {
+  margin: 0 .5em;
+  color: var(--muted);
+}
+
+.hint {
+  position: fixed;
+  left: var(--edge-x);
+  bottom: max(22px, env(safe-area-inset-bottom));
+  z-index: 3;
+  margin: 0;
+  padding: 6px 11px 6px 10px;
+  border-radius: 999px;
+  background: rgba(255, 254, 252, .74);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  font-size: 11.5px;
+  letter-spacing: .08em;
+  color: var(--muted);
+  pointer-events: none;
+  transition: opacity .6s ease, transform .6s ease;
+}
+
+.hint.is-hidden {
+  opacity: 0;
+  transform: translateY(4px);
+}
+
+/* ---------- 右下角按钮 ---------- */
+
+.hud {
+  position: fixed;
+  right: max(22px, env(safe-area-inset-right));
+  bottom: max(20px, env(safe-area-inset-bottom));
+  z-index: 4;
+  display: flex;
+  gap: 8px;
+}
+
+.hud__btn {
+  appearance: none;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 7px 13px;
+  background: rgba(255, 254, 252, .76);
+  -webkit-backdrop-filter: blur(10px) saturate(1.1);
+  backdrop-filter: blur(10px) saturate(1.1);
+  color: var(--ink-soft);
+  font-family: inherit;
+  font-size: 11.5px;
+  letter-spacing: .06em;
+  line-height: 1;
+  cursor: pointer;
+  transition: color .18s ease, border-color .18s ease, background .18s ease;
+}
+
+.hud__btn:hover {
+  color: var(--ink);
+  border-color: rgba(35, 33, 30, .32);
+  background: var(--paper-hi);
+}
+
+.hud__btn:active { transform: translateY(1px); }
+
+/* ---------- 聚焦时的说话人 ---------- */
+
+.focus-info {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: max(15vh, 96px);
+  z-index: 2;
+  padding: 0 32px;
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity .4s ease .15s, transform .4s ease .15s;
+}
+
+.focus-info.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+.focus-info__speaker {
+  margin: 0;
+  font-size: clamp(14px, 2.1vw, 19px);
+  letter-spacing: .1em;
+  color: var(--ink-soft);
+}
+
+.focus-info__speaker:empty { display: none; }
+
+.focus-info__hint {
+  margin: .6em 0 0;
+  font-size: 11px;
+  letter-spacing: .14em;
+  color: var(--muted);
+  opacity: .85;
+}
+
+/* ---------- 空态 ---------- */
+
+.empty {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: 2rem;
+  text-align: center;
+  line-height: 1.9;
+  color: var(--muted);
+}
+
+.empty code {
+  padding: .1em .4em;
+  border-radius: 4px;
+  background: rgba(35, 33, 30, .06);
+  font-family: var(--mono);
+  font-size: .9em;
+}
+
+/* ---------- 句子列表：无脚本时是正文，有脚本时搬进弹层 ---------- */
+
+.quotes {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+html.js .stage > .quotes { display: none; }
+
+html:not(.js) body { overflow: auto; }
+
+html:not(.js) .cloud,
+html:not(.js) .hud,
+html:not(.js) .hint,
+html:not(.js) .focus-info { display: none; }
+
+html:not(.js) .quotes {
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 112px 24px 96px;
+}
+
+html:not(.js) .quotes li {
+  padding: 18px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 17px;
+  line-height: 1.72;
+}
+
+html:not(.js) .quotes li::after {
+  content: "—— " attr(data-speaker);
+  display: block;
+  margin-top: 7px;
+  font-size: 12px;
+  letter-spacing: .08em;
+  color: var(--muted);
+}
+
+html:not(.js) .quotes li[data-speaker=""]::after { content: none; }
+
+/* ---------- 全部句子弹层 ---------- */
+
+.sheet {
+  width: min(44rem, calc(100vw - 32px));
+  max-height: min(80dvh, 760px);
+  margin: auto;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--paper-hi);
+  color: var(--ink);
+  box-shadow:
+    0 40px 110px -34px rgba(44, 36, 24, .42),
+    0 2px 12px rgba(44, 36, 24, .08);
+  overflow: hidden;
+}
+
+.sheet[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.sheet::backdrop {
+  background: rgba(47, 40, 31, .28);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+.sheet__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 12px 24px;
+}
+
+.sheet__title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .22em;
+  color: var(--ink-soft);
+}
+
+.sheet__close {
+  appearance: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background .18s ease, color .18s ease;
+}
+
+.sheet__close:hover {
+  background: rgba(35, 33, 30, .06);
+  color: var(--ink);
+}
+
+.sheet__search {
+  padding: 0 24px 14px;
+}
+
+#quote-filter {
+  width: 100%;
+  padding: 10px 13px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fbfaf6;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 13.5px;
+  letter-spacing: .02em;
+  transition: border-color .18s ease, background .18s ease;
+}
+
+#quote-filter::placeholder { color: var(--muted); }
+
+#quote-filter:focus {
+  outline: none;
+  border-color: rgba(35, 33, 30, .38);
+  background: #fff;
+}
+
+#quote-filter:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.sheet__note {
+  margin: 0;
+  padding: 0 24px 12px;
+  font-size: 12px;
+  line-height: 1.65;
+  letter-spacing: .02em;
+  color: var(--muted);
+}
+
+.sheet__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 10px 12px;
+  scrollbar-width: thin;
+}
+
+.sheet__body .quotes li + li { border-top: 1px solid var(--line); }
+
+.quote-btn {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 18px;
+  width: 100%;
+  padding: 13px 14px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background .15s ease;
+}
+
+.quote-btn:hover { background: rgba(35, 33, 30, .045); }
+.quote-btn:active { background: rgba(35, 33, 30, .075); }
+
+.quote-btn__text {
+  flex: 1 1 auto;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.quote-btn__who {
+  flex: 0 0 auto;
+  max-width: 38%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  letter-spacing: .05em;
+  color: var(--muted);
+}
+
+.sheet__empty {
+  margin: 0;
+  padding: 8px 24px 28px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* ---------- 单句视图：给没铺进词云的句子兜底 ---------- */
+
+.solo {
+  position: fixed;
+  inset: 0;
+  z-index: 6;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 1.2rem;
+  padding: 12vh 8vw;
+  background: rgba(250, 249, 247, .965);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .28s ease;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.solo.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* 整层只是给读屏用的焦点容器，不要让浏览器画一圈全屏焦点框 */
+.solo:focus,
+.solo:focus-visible { outline: none; }
+
+.solo__text {
+  margin: 0;
+  max-width: 30em;
+  font-size: clamp(22px, 4.4vw, 46px);
+  line-height: 1.55;
+  letter-spacing: .02em;
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+.solo__who {
+  margin: 0;
+  font-size: 14px;
+  letter-spacing: .12em;
+  color: var(--muted);
+}
+
+.solo__who[hidden] { display: none; }
+
+.solo__hint {
+  margin: 2.4rem 0 0;
+  font-size: 11px;
+  letter-spacing: .14em;
+  color: var(--muted);
+  opacity: .8;
+}
+
+/* ---------- 窄屏 ---------- */
+
+@media (max-width: 560px) {
+  :root {
+    --edge-x: max(18px, env(safe-area-inset-left));
+    --edge-y: max(18px, env(safe-area-inset-top));
+  }
+
+  .brand__title { letter-spacing: .14em; }
+
+  .hint {
+    bottom: max(18px, env(safe-area-inset-bottom));
+    font-size: 11px;
+    max-width: 44vw;
+  }
+
+  .hud {
+    right: max(14px, env(safe-area-inset-right));
+    bottom: max(14px, env(safe-area-inset-bottom));
+    gap: 6px;
+  }
+
+  .hud__btn { padding: 7px 11px; font-size: 11px; }
+
+  .focus-info { bottom: max(19vh, 108px); padding: 0 20px; }
+
+  .sheet {
+    width: 100%;
+    max-width: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .sheet__head { padding: 20px 16px 12px 20px; }
+  .sheet__search { padding: 0 20px 12px; }
+
+  .quote-btn { gap: 12px; padding: 12px 10px; }
+  .quote-btn__text { font-size: 14.5px; }
+}
+
+/* ---------- 减少动效 ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .cloud text,
+  .focus-info,
+  .hint,
+  .hud__btn,
+  .sheet__close,
+  #quote-filter { transition: none; }
+
+  .cloud:not(.is-focused) g.word { transition: none; }
+  .cloud:not(.is-focused) g.word:hover { transform: none; }
+  .cloud g.word { animation: none !important; }
+}

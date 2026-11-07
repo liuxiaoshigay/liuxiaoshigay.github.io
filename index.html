@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>刘骁 · 句子</title>
+<meta name="description" content="刘骁的句子。点一句话，看它说话。">
+<meta name="theme-color" content="#faf9f7">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="assets/img/icon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="assets/img/icon-180.png">
+<link rel="manifest" href="site.webmanifest">
+<link rel="canonical" href="https://xn--2br487o.xn--0iv.gay/">
+<!-- 上面和下面的 xn--... 是 刘骁.是.gay 的 punycode 形式，
+     搜索引擎和社交平台抓取时用 ASCII 形式更稳；浏览器地址栏仍显示中文。 -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="刘骁 · 句子">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:title" content="刘骁 · 句子">
+<meta property="og:description" content="刘骁的句子。点一句话，看它说话。">
+<meta property="og:url" content="https://xn--2br487o.xn--0iv.gay/">
+<meta property="og:image" content="https://xn--2br487o.xn--0iv.gay/assets/img/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="刘骁 · 句子">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="assets/css/style.css">
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+
+<header class="brand">
+  <h1 class="brand__title">刘骁<span class="brand__dot" aria-hidden="true">·</span>句子</h1>
+</header>
+
+<main class="stage">
+  <div id="cloud" class="cloud" aria-hidden="true"></div>
+
+  <p id="empty" class="empty" hidden>还没有句子。打开 <code>index.html</code>，在 <code>&lt;ul id="quotes"&gt;</code> 里加几句。</p>
+
+  <!-- 句子都在这里：一行一句，data-speaker 是说话人（可以删掉，那样底部就不显示说话人）。
+       改完保存、刷新页面即可；没有脚本时，这一列本身就是页面正文。 -->
+  <ul id="quotes" class="quotes">
+    <li data-speaker="数学老师">这道题我讲过八百遍了。</li>
+    <li data-speaker="班主任">你们是我带过最差的一届。</li>
+    <li data-speaker="拖堂的老师">最后一分钟，真的最后一分钟。</li>
+    <li data-speaker="同桌">食堂今天的肉，是土豆味的。</li>
+    <li data-speaker="室友">我从来不熬夜，我只是睡得晚。</li>
+    <li data-speaker="室友">早八不是课，是修行。</li>
+    <li data-speaker="我">手机只剩 3%，但我还能再刷二十分钟。</li>
+    <li data-speaker="全班">老师，我肚子疼。</li>
+    <li data-speaker="某同学">作业本忘带了，但我真的写了。</li>
+    <li data-speaker="后排">这道题选 C，A 和 B 看着不对，D 太长了。</li>
+    <li data-speaker="某同学">我复习了，我复习了目录。</li>
+    <li data-speaker="每天早上">再睡五分钟。</li>
+    <li data-speaker="周五的我">这周一定把作业补完。</li>
+    <li data-speaker="室友">一躺下就精神，一上课就困。</li>
+    <li data-speaker="同桌">别卷了，头都秃了。</li>
+    <li data-speaker="我妈">别人家的孩子已经睡了。</li>
+    <li data-speaker="教导主任">你们班这个纪律，我教了三十年没见过。</li>
+    <li data-speaker="校长">我就说两句。</li>
+    <li data-speaker="每科老师">这个知识点，考试必考。</li>
+    <li data-speaker="老师">翻到第 87 页。</li>
+    <li data-speaker="老师">课代表，把作业收一下。</li>
+    <li data-speaker="课代表">我没写。</li>
+    <li data-speaker="班主任">体育老师今天生病了。</li>
+    <li data-speaker="体育老师">跑两圈，热身。</li>
+    <li data-speaker="输了的班">友谊第一，比赛第二。</li>
+    <li data-speaker="班主任">我们班平均分比上次高了 0.5。</li>
+    <li data-speaker="班主任">这叫进步。</li>
+    <li data-speaker="老师">这次考试很简单。</li>
+    <li data-speaker="老师">难者不会，会者不难。</li>
+    <li data-speaker="考前五分钟的我">不要慌，稳住。</li>
+    <li data-speaker="同桌">这题我蒙的，居然对了。</li>
+    <li data-speaker="某同学">答案写“略”，老师也写“略”。</li>
+    <li data-speaker="班主任">你们现在不吃苦，以后就要吃土。</li>
+    <li data-speaker="班主任">读书不是为了我，是为了你们自己。</li>
+    <li data-speaker="全校">下课。</li>
+    <li data-speaker="走廊放哨的">老师来了！</li>
+    <li data-speaker="被抓包的我">我没有，我不是，别瞎说。</li>
+    <li data-speaker="所有人">这事儿跟我没关系。</li>
+    <li data-speaker="打开游戏的我">我真的只玩五分钟。</li>
+    <li data-speaker="凌晨一点的我">今天一定十一点睡。</li>
+    <li data-speaker="正在吃夜宵的我">明天开始减肥。</li>
+    <li data-speaker="吃完一整袋的我">就一口。</li>
+    <li data-speaker="心态崩了的我">我没事，我很好。</li>
+    <li data-speaker="手在抖的我">我一点都不紧张。</li>
+    <li data-speaker="然后翻车了">这个我熟。</li>
+    <li data-speaker="想了三天">让我再想想。</li>
+    <li data-speaker="凌晨两点">你先睡，我马上。</li>
+    <li data-speaker="第十二次">这次真的最后一次。</li>
+    <li data-speaker="还在床上">我马上到。</li>
+    <li data-speaker="迟到了">别急，还早。</li>
+  </ul>
+</main>
+
+<p id="hint" class="hint">点一句话，看它说话</p>
+
+<div id="focus-info" class="focus-info">
+  <p id="focus-speaker" class="focus-info__speaker" aria-live="polite"></p>
+  <p class="focus-info__hint">点击空白处返回</p>
+</div>
+
+<div class="hud">
+  <button id="shuffle" class="hud__btn" type="button" title="重新排列（快捷键 R）">重排</button>
+  <button id="open-list" class="hud__btn" type="button" aria-haspopup="dialog" title="查看全部句子（快捷键 L）">全部 <span id="quote-count">50</span> 句</button>
+</div>
+
+<dialog id="list-dialog" class="sheet" aria-labelledby="sheet-title">
+  <div class="sheet__head">
+    <h2 id="sheet-title" class="sheet__title">全部句子</h2>
+    <button id="close-list" class="sheet__close" type="button" aria-label="关闭">✕</button>
+  </div>
+  <div class="sheet__search">
+    <input id="quote-filter" type="search" placeholder="筛选句子或说话人" aria-label="筛选句子或说话人" autocomplete="off" spellcheck="false">
+  </div>
+  <p id="sheet-note" class="sheet__note" hidden></p>
+  <div id="list-body" class="sheet__body"></div>
+  <p id="list-empty" class="sheet__empty" hidden>没有找到匹配的句子。</p>
+</dialog>
+
+<div id="solo" class="solo" role="dialog" aria-modal="true" aria-labelledby="solo-text" tabindex="-1" hidden>
+  <p id="solo-text" class="solo__text"></p>
+  <p id="solo-who" class="solo__who"></p>
+  <p class="solo__hint">点击任意处返回</p>
+</div>
+
+<script src="assets/vendor/d3-cloud.min.js" defer></script>
+<script src="assets/js/cloud-core.js" defer></script>
+<script src="assets/js/cloud-layout.js" defer></script>
+<script src="assets/js/app.js" defer></script>
+<script>
+/* 依赖脚本万一没加载成功，几秒后把页面退回"纯列表"形态，别留白屏 */
+setTimeout(function () {
+  var root = document.documentElement;
+  if (root.hasAttribute('data-ready')) return;
+  root.classList.remove('js');
+  var list = document.getElementById('quotes');
+  var stage = document.querySelector('.stage');
+  if (list && stage && list.parentNode !== stage) stage.appendChild(list);
+}, 2600);
+</script>
+</body>
+</html>

@@ -254,6 +254,23 @@ a:focus-visible {
 
 .help li { margin-bottom: 6px; }
 
+.help pre {
+  margin: 12px 0;
+  padding: 12px 14px;
+  overflow-x: auto;
+  border-radius: 8px;
+  background: #f4f2ec;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.help pre code {
+  padding: 0;
+  background: none;
+  font-size: inherit;
+}
+
 .bar {
   display: flex;
   align-items: center;

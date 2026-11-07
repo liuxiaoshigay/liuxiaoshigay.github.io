@@ -32,8 +32,8 @@
     </p>
     <label class="field">
       <span>Fine-grained token</span>
-      <input id="token-input" type="password" autocomplete="off" spellcheck="false"
-             placeholder="github_pat_...">
+      <input id="token-input" type="password" autocomplete="new-password" spellcheck="false"
+             placeholder="github_pat_... 或 ghp_...">
     </label>
     <p id="token-hint" class="token-hint"></p>
     <label class="check"><input id="show-token" type="checkbox"> 显示令牌</label>
@@ -57,8 +57,14 @@
         <li>Generate token，复制 <code>github_pat_...</code>，粘到上面的输入框。</li>
       </ol>
       <p class="muted">
-        不要用 classic token；这个 fine-grained token 只对这个仓库有内容读写权限。
+        推荐 fine-grained token（只对这个仓库有 Contents / Issues 权限）。如果嫌步骤多，
+        也可以用 classic token（勾 <code>repo</code>，权限更大，只建议在自己的电脑上用）。
         万一泄露，在同一页面 Revoke 即可。
+      </p>
+      <p class="muted">
+        最快的 classic 方式：<a href="https://github.com/settings/tokens/new?scopes=repo&amp;description=liuxiao-admin"
+        target="_blank" rel="noopener">打开预填页面</a> → 页面底部 <b>Generate token</b> →
+        复制 <code>ghp_...</code>（40 个字符）→ 粘到上面。
       </p>
     </details>
   </section>

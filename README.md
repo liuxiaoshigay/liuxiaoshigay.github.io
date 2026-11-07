@@ -98,10 +98,10 @@ liuxiao-site/
 
 已做：
 
-- **DOM 级冒烟测试**（jsdom 真实解析 `index.html` 并加载四个脚本）：50 条句子 → 桌面 36 个词、手机 16 个散点；点击聚焦、点空白退出、打开列表、搜索过滤、从列表点选、未铺下句子的单句视图，全部通过。
+- **DOM 级冒烟测试**（jsdom 真实解析 `index.html` 并加载四个脚本）：59 条句子 → 桌面 36 个词、手机 16 个散点；点击聚焦、点空白退出、打开列表、搜索过滤、从列表点选、未铺下句子的单句视图，全部通过。
 - 静态检查：重复 `id`、未闭合标签、本地资源引用、CSS 括号、manifest JSON。
 - 三个 JS 文件 `node --check` 通过。
-- 线上检查：首页 200、50 句、CSS/JS/图标全部 200、自定义 404 生效。
+- 线上检查：首页 200、59 句、CSS/JS/图标全部 200、自定义 404 生效。
 
 未做：
 
@@ -113,6 +113,6 @@ liuxiao-site/
 - **d3-cloud 1.2.9** — BSD-3-Clause，Copyright (c) 2013 Jason Davies，见 `assets/vendor/d3-cloud-LICENSE.txt`
 - **d3-dispatch**（打包在 d3-cloud 内）— ISC，Copyright 2010-2026 Mike Bostock，见 `assets/vendor/d3-dispatch-LICENSE.txt`
 
-## 关于示例句子
+## 关于句子
 
-`index.html` 里的 50 句是示例文本（说话人是"数学老师""室友""我妈"这类角色），只是用来展示排版效果，换成你自己的即可。
+`index.html` 里现在有 59 句：50 句是示例文本（说话人是"数学老师""室友""我妈"这类角色），另外 9 句来自 `名人名言.docx`（说话人是学明、徐历、学生、市西、周家宏、羊家儿、徐思为）。换成你自己的即可。

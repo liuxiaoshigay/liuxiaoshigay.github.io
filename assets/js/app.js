@@ -622,7 +622,7 @@
     }
   }
 
-  function onSubmit(ev) {
+  async function onSubmit(ev) {
     ev.preventDefault();
 
     var text = submitText ? submitText.value.trim() : '';
@@ -639,7 +639,41 @@
     }
 
     var cfg = window.SITE_CONFIG || {};
-    var repo = cfg.repo || 'liuxiaoshigay/liuxiaoshigay.github.io';
+
+    // Supabase：访客不需要 GitHub 账号
+    if (cfg.supabaseUrl && cfg.supabaseAnonKey) {
+      setSubmitStatus('正在提交…');
+      try {
+        var res = await fetch(cfg.supabaseUrl + '/rest/v1/submissions', {
+          method: 'POST',
+          headers: {
+            'apikey': cfg.supabaseAnonKey,
+            'Authorization': 'Bearer ' + cfg.supabaseAnonKey,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ speaker: speaker, text: text })
+        });
+
+        if (!res.ok) {
+          var message = '';
+          try {
+            var data = await res.json();
+            message = data.message || data.error || '';
+          } catch (err) {}
+          throw new Error(message || ('HTTP ' + res.status));
+        }
+
+        setSubmitStatus('已提交，等站长审核后上线。', 'ok');
+        if (submitText) submitText.value = '';
+        if (submitSpeaker) submitSpeaker.value = '';
+      } catch (err) {
+        setSubmitStatus('提交失败：' + err.message + '。可以先点“复制内容”发给站长。', 'err');
+      }
+      return;
+    }
+
+    // 没配置 Supabase 时的兜底：GitHub Issue
+    var repo = 'liuxiaoshigay/liuxiaoshigay.github.io';
     var title = '【投稿】' + (speaker ? speaker + '：' : '') + text.slice(0, 40);
     var body = '说话人：' + (speaker || '（未填）') +
       '\n句子：' + text +
@@ -816,22 +850,70 @@
     }
   }
 
-  function init() {
+  /* 从 Supabase 读取已上线的动态句子，追加到页面里的静态列表后面。
+     读不到就只用静态的 59 句，不阻塞页面。 */
+  async function loadRemoteQuotes() {
+    var cfg = window.SITE_CONFIG || {};
+    if (!cfg.supabaseUrl || !cfg.supabaseAnonKey || !sourceList) return;
+
+    var controller = null;
+    var timer = 0;
+
+    try {
+      var options = {
+        headers: {
+          'apikey': cfg.supabaseAnonKey,
+          'Authorization': 'Bearer ' + cfg.supabaseAnonKey
+        }
+      };
+
+      if (typeof AbortController === 'function') {
+        controller = new AbortController();
+        options.signal = controller.signal;
+        timer = window.setTimeout(function () { controller.abort(); }, 3000);
+      }
+
+      var res = await fetch(
+        cfg.supabaseUrl + '/rest/v1/quotes?select=id,speaker,text,created_at&order=created_at.asc',
+        options
+      );
+      if (!res.ok) return;
+
+      var rows = await res.json();
+      if (!Array.isArray(rows) || !rows.length) return;
+
+      rows.forEach(function (row) {
+        if (!row || !row.text) return;
+        var li = doc.createElement('li');
+        if (row.speaker) li.setAttribute('data-speaker', String(row.speaker));
+        li.textContent = String(row.text);
+        sourceList.appendChild(li);
+      });
+    } catch (err) {
+      if (window.console) console.warn('[sentences] 动态句子读取失败，使用静态列表', err);
+    } finally {
+      if (timer) window.clearTimeout(timer);
+    }
+  }
+
+  async function init() {
     // 兜底计时器已经把页面切回"纯列表"了（比如脚本极慢），就不要再接管
     if (!docEl.classList.contains('js')) return;
-
-    entries = readEntries();
-    visible = entries.filter(function (entry) { return entry.text; });
-
-    if (countEl) countEl.textContent = String(visible.length);
 
     if (!window.CloudCore || !window.CloudLayout) {
       fail(new Error('依赖脚本没有加载'));
       return;
     }
 
-    // 脚本已经跑起来了，先告诉兜底计时器别再插手；排版慢不算失败
+    // 脚本已经跑起来了，先告诉兜底计时器别再插手；读取动态句子慢不算失败
     docEl.setAttribute('data-ready', '');
+
+    await loadRemoteQuotes();
+
+    entries = readEntries();
+    visible = entries.filter(function (entry) { return entry.text; });
+
+    if (countEl) countEl.textContent = String(visible.length);
 
     buildList();
     bindUI();
@@ -846,7 +928,7 @@
   }
 
   try {
-    init();
+    init().catch(fail);
   } catch (err) {
     fail(err);
   }

@@ -50,8 +50,8 @@
     <li data-speaker="徐历">这一届高一真的不一样</li>
     <li data-speaker="徐历">我现在心情很复杂</li>
     <li data-speaker="学生">说好的ipad的呢</li>
-    <li data-speaker="市西">汇集四方众英精</li>
-    <li data-speaker="学生">市西哪里佛系了</li>
+    <li data-speaker="某中学">汇集四方众英精</li>
+    <li data-speaker="学生">某中学哪里佛系了</li>
     <li data-speaker="周家宏">我们是交附静安</li>
     <li data-speaker="羊家儿">我是上限</li>
     <li data-speaker="徐思为">一朵菊花，一个小鬼</li>
@@ -131,6 +131,7 @@
   <p id="sheet-note" class="sheet__note" hidden></p>
   <div id="list-body" class="sheet__body"></div>
   <p id="list-empty" class="sheet__empty" hidden>没有找到匹配的句子。</p>
+  <p class="sheet__legal">一切人名和地名均为虚构产物。</p>
 </dialog>
 
 <div id="solo" class="solo" role="dialog" aria-modal="true" aria-labelledby="solo-text" tabindex="-1" hidden>
@@ -138,6 +139,19 @@
   <p id="solo-who" class="solo__who"></p>
   <p class="solo__hint">点击任意处返回</p>
 </div>
+
+<dialog id="notice-dialog" class="sheet notice-sheet" aria-labelledby="notice-title">
+  <div class="sheet__head">
+    <h2 id="notice-title" class="sheet__title">声明</h2>
+    <button id="notice-close" class="sheet__close" type="button" aria-label="关闭">✕</button>
+  </div>
+  <div class="notice-body">
+    <p class="notice-text">一切人名和地名均为虚构产物。</p>
+  </div>
+  <div class="notice-actions">
+    <button id="notice-ok" class="submit-btn submit-btn--primary" type="button">我知道了</button>
+  </div>
+</dialog>
 
 <dialog id="submit-dialog" class="sheet submit-sheet" aria-labelledby="submit-title">
   <form id="submit-form" class="submit-form">

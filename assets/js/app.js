@@ -33,6 +33,9 @@
   var submitCopy = doc.getElementById('submit-copy');
   var submitStatus = doc.getElementById('submit-status');
   var submitClose = doc.getElementById('submit-close');
+  var noticeDialog = doc.getElementById('notice-dialog');
+  var noticeOk = doc.getElementById('notice-ok');
+  var noticeClose = doc.getElementById('notice-close');
 
   var reduceMotion = window.matchMedia
     ? window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -57,6 +60,7 @@
 
   /* 词云里不低于这个字号；再小就不如去列表里看 */
   var MIN_CLOUD_SIZE = 11;
+  var NOTICE_KEY = 'liuxiao:notice-ack';
 
   /* ---------- 读数据 ---------- */
 
@@ -622,6 +626,46 @@
     }
   }
 
+  /* ---------- 进入声明 ---------- */
+
+  function noticeAcknowledged() {
+    try {
+      return window.sessionStorage.getItem(NOTICE_KEY) === '1';
+    } catch (err) {
+      return false;
+    }
+  }
+
+  function acknowledgeNotice() {
+    try {
+      window.sessionStorage.setItem(NOTICE_KEY, '1');
+    } catch (err) {}
+  }
+
+  function openNotice() {
+    if (!noticeDialog) return;
+    if (noticeAcknowledged() || noticeDialog.open) return;
+    if (dialog && dialog.open) return;
+    if (submitDialog && submitDialog.open) return;
+
+    if (typeof noticeDialog.showModal === 'function') {
+      noticeDialog.showModal();
+    } else {
+      noticeDialog.setAttribute('open', '');
+    }
+  }
+
+  function closeNotice() {
+    acknowledgeNotice();
+    if (!noticeDialog) return;
+
+    if (typeof noticeDialog.close === 'function' && noticeDialog.open) {
+      noticeDialog.close();
+    } else {
+      noticeDialog.removeAttribute('open');
+    }
+  }
+
   async function onSubmit(ev) {
     ev.preventDefault();
 
@@ -786,6 +830,15 @@
       });
     }
 
+    if (noticeOk) noticeOk.addEventListener('click', closeNotice);
+    if (noticeClose) noticeClose.addEventListener('click', closeNotice);
+    if (noticeDialog) {
+      noticeDialog.addEventListener('cancel', function (ev) {
+        ev.preventDefault();
+        closeNotice();
+      });
+    }
+
     doc.body.addEventListener('click', function (ev) {
       var target = ev.target;
       if (target && target.closest && target.closest('.hud, dialog')) return;
@@ -925,6 +978,7 @@
     }
 
     if (hintEl) hintTimer = window.setTimeout(hideHint, 7000);
+    if (noticeDialog) window.setTimeout(openNotice, 700);
   }
 
   try {

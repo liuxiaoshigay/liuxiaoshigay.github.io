@@ -83,7 +83,8 @@
     var res = await fetch(BASE + path, {
       method: opts.method || 'GET',
       headers: headers,
-      body: opts.body
+      body: opts.body,
+      cache: 'no-store'
     });
 
     var text = await res.text();

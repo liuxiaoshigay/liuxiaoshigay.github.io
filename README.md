@@ -1,4 +1,4 @@
-# 刘骁是gay
+# 留校是给
 
 一个只有一页的"句子词云"：所有句子随机大小、随机颜色铺在纸面上；点一句，它飞到屏幕中央放大，底部出现说话人；点空白处（或按 Esc）回到词云。
 
@@ -12,6 +12,8 @@
 <https://liuxiaoshigay.github.io/>
 
 仓库名就是 `liuxiaoshigay.github.io`，属于 GitHub Pages 用户站，所以站点直接在根路径。
+
+> 站名已改为「留校是给」；线上地址仍是 `https://liuxiaoshigay.github.io/`（GitHub Pages 用户站地址，改地址会断链）。
 
 ## 操作
 

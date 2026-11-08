@@ -24,7 +24,7 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="留校是给">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="stylesheet" href="assets/css/style.css">
+<link rel="stylesheet" href="assets/css/style.css?v=3">
 <script>document.documentElement.classList.add('js');</script>
 </head>
 <body>
@@ -131,7 +131,7 @@
   <p id="sheet-note" class="sheet__note" hidden></p>
   <div id="list-body" class="sheet__body"></div>
   <p id="list-empty" class="sheet__empty" hidden>没有找到匹配的句子。</p>
-  <p class="sheet__legal">一切人名和地名均为虚构产物。</p>
+  <p class="sheet__legal">一切人名和地名均为虚构产物。<button id="open-notice" class="legal-link" type="button">完整声明</button></p>
 </dialog>
 
 <div id="solo" class="solo" role="dialog" aria-modal="true" aria-labelledby="solo-text" tabindex="-1" hidden>
@@ -142,14 +142,23 @@
 
 <dialog id="notice-dialog" class="sheet notice-sheet" aria-labelledby="notice-title">
   <div class="sheet__head">
-    <h2 id="notice-title" class="sheet__title">声明</h2>
+    <h2 id="notice-title" class="sheet__title">免责声明</h2>
     <button id="notice-close" class="sheet__close" type="button" aria-label="关闭">✕</button>
   </div>
   <div class="notice-body">
-    <p class="notice-text">一切人名和地名均为虚构产物。</p>
+    <p class="notice-text">本页面为个人娱乐与虚构创作，不是新闻、纪实或事实陈述。</p>
+    <ol class="notice-list">
+      <li>页面中的全部句子、人名、昵称、地名、校名、事件、时间等，均为虚构、戏谑或化名表达，与任何真实个人、学校、机构、事件无关；如有雷同，纯属巧合。</li>
+      <li>句子由站长整理或访客投稿，仅代表投稿者或角色的戏谑表达，不代表站长观点，也不构成对任何人的事实陈述、评价、指控或名誉评价。</li>
+      <li>请勿将页面内容与现实中的个人、学校、单位对号入座，更不要据此进行骚扰、侮辱、诽谤、人肉搜索或其他侵犯他人权益的行为。</li>
+      <li>如页面内容涉及你的真实姓名、学校、隐私，或你认为构成侵权，请通过本页「＋ 提一句」提交【删除/更正】及具体句子，或到 <a href="https://github.com/liuxiaoshigay/liuxiaoshigay.github.io/issues/new" target="_blank" rel="noopener">GitHub 仓库提 Issue</a>；核实后会尽快删除或修改。</li>
+      <li>访客投稿请勿包含他人真实姓名、联系方式、隐私、诽谤、侮辱或违法内容；投稿经站长审核后才会发布，站长有权删除任何内容。</li>
+      <li>本站为静态页面，使用 GitHub Pages 托管、Supabase 存储投稿；不对第三方服务的连续性、安全性作保证。</li>
+    </ol>
+    <p class="notice-foot">继续浏览或投稿即表示你已阅读、理解并同意本声明。</p>
   </div>
   <div class="notice-actions">
-    <button id="notice-ok" class="submit-btn submit-btn--primary" type="button">我知道了</button>
+    <button id="notice-ok" class="submit-btn submit-btn--primary" type="button">我已阅读并理解</button>
   </div>
 </dialog>
 
@@ -181,7 +190,7 @@
 <script src="assets/vendor/d3-cloud.min.js" defer></script>
 <script src="assets/js/cloud-core.js" defer></script>
 <script src="assets/js/cloud-layout.js" defer></script>
-<script src="assets/js/app.js" defer></script>
+<script src="assets/js/app.js?v=3" defer></script>
 <script>
 /* 依赖脚本万一没加载成功，几秒后把页面退回"纯列表"形态，别留白屏 */
 setTimeout(function () {

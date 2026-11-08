@@ -591,6 +591,9 @@ html:not(.js) .quotes li[data-speaker=""]::after { content: none; }
 
 .notice-body {
   padding: 6px 24px 0;
+  max-height: 48dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .notice-text {
@@ -599,6 +602,32 @@ html:not(.js) .quotes li[data-speaker=""]::after { content: none; }
   line-height: 1.9;
   letter-spacing: .02em;
   color: var(--ink);
+}
+
+.notice-list {
+  margin: 14px 0 0;
+  padding-left: 1.3em;
+  font-size: 13px;
+  line-height: 1.85;
+  letter-spacing: .01em;
+  color: var(--ink-soft);
+}
+
+.notice-list li + li {
+  margin-top: 8px;
+}
+
+.notice-list a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.notice-foot {
+  margin: 14px 0 0;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--muted);
 }
 
 .notice-actions {
@@ -614,6 +643,22 @@ html:not(.js) .quotes li[data-speaker=""]::after { content: none; }
   line-height: 1.6;
   letter-spacing: .02em;
   color: var(--muted);
+}
+
+.legal-link {
+  appearance: none;
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--ink-soft);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.legal-link:hover {
+  color: var(--ink);
 }
 
 /* ---------- 单句视图：给没铺进词云的句子兜底 ---------- */

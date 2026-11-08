@@ -36,6 +36,7 @@
   var noticeDialog = doc.getElementById('notice-dialog');
   var noticeOk = doc.getElementById('notice-ok');
   var noticeClose = doc.getElementById('notice-close');
+  var openNoticeBtn = doc.getElementById('open-notice');
 
   var reduceMotion = window.matchMedia
     ? window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -60,7 +61,7 @@
 
   /* 词云里不低于这个字号；再小就不如去列表里看 */
   var MIN_CLOUD_SIZE = 11;
-  var NOTICE_KEY = 'liuxiao:notice-ack';
+  var NOTICE_KEY = 'liuxiao:notice-ack-v2';
 
   /* ---------- 读数据 ---------- */
 
@@ -642,14 +643,25 @@
     } catch (err) {}
   }
 
-  function openNotice() {
+  function openNotice(force) {
     if (!noticeDialog) return;
-    if (noticeAcknowledged() || noticeDialog.open) return;
-    if (dialog && dialog.open) return;
-    if (submitDialog && submitDialog.open) return;
+    if (noticeDialog.open) return;
+
+    if (!force) {
+      if (noticeAcknowledged()) return;
+      if (dialog && dialog.open) return;
+      if (submitDialog && submitDialog.open) return;
+    } else {
+      if (dialog && dialog.open) closeList();
+      if (submitDialog && submitDialog.open) closeSubmit();
+    }
 
     if (typeof noticeDialog.showModal === 'function') {
-      noticeDialog.showModal();
+      try {
+        noticeDialog.showModal();
+      } catch (err) {
+        noticeDialog.setAttribute('open', '');
+      }
     } else {
       noticeDialog.setAttribute('open', '');
     }
@@ -832,6 +844,13 @@
 
     if (noticeOk) noticeOk.addEventListener('click', closeNotice);
     if (noticeClose) noticeClose.addEventListener('click', closeNotice);
+    if (openNoticeBtn) {
+      openNoticeBtn.addEventListener('click', function (ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        openNotice(true);
+      });
+    }
     if (noticeDialog) {
       noticeDialog.addEventListener('cancel', function (ev) {
         ev.preventDefault();

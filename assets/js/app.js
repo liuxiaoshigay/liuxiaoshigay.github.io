@@ -933,6 +933,7 @@
 
     try {
       var options = {
+        cache: 'no-store',
         headers: {
           'apikey': cfg.supabaseAnonKey,
           'Authorization': 'Bearer ' + cfg.supabaseAnonKey

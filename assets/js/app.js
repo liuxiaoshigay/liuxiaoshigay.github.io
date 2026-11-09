@@ -120,19 +120,14 @@
       };
     });
 
-    /* 长句先落位：它们横向几乎占满，越晚放越难找位置。
-       竖排散点不靠碰撞排布，顺序保持随机更好看。 */
-    if (size.w >= 620) {
-      words.sort(function (a, b) {
-        return CloudCore.charCount(b.text) * b.size - CloudCore.charCount(a.text) * a.size;
-      });
-    }
+    /* 长句先落位：它们横向几乎占满，越晚放越难找位置。 */
+    words.sort(function (a, b) {
+      return CloudCore.charCount(b.text) * b.size - CloudCore.charCount(a.text) * a.size;
+    });
 
     var job;
     try {
-      job = size.w < 620
-        ? CloudLayout.stack({ words: words, width: size.w, height: size.h })
-        : CloudLayout.layout({ words: words, width: size.w, height: size.h });
+      job = CloudLayout.layout({ words: words, width: size.w, height: size.h });
     } catch (err) {
       fail(err);
       return;
@@ -159,14 +154,12 @@
   }
 
   /* 屏幕上放不下全部句子时，挑一批能看清的。
-     手机取 12–18 句短句竖排；宽屏按面积最多 56 句。
+     电脑和手机用同一套规则：按屏幕面积决定数量，最多 56 句；
+     手机屏幕小，自然少铺几句，但不再是单独的“精简版”。
      剩下的都在"全部句子"列表里，点开可单独看。 */
   function chooseShowcase(size) {
     var maxWidth = size.w * 0.8;
-    var narrow = size.w < 620;
-    var limit = narrow
-      ? Math.max(12, Math.min(18, Math.round((size.w * size.h) / 20000)))
-      : Math.max(20, Math.min(56, Math.round((size.w * size.h) / 22000)));
+    var limit = Math.max(20, Math.min(56, Math.round((size.w * size.h) / 22000)));
 
     var fits = visible.filter(function (entry) {
       return CloudCore.charCount(entry.text) * MIN_CLOUD_SIZE <= maxWidth;
@@ -176,13 +169,6 @@
     var pool = fits.length ? fits : visible.slice().sort(function (a, b) {
       return CloudCore.charCount(a.text) - CloudCore.charCount(b.text);
     });
-
-    if (narrow && fits.length) {
-      var short = fits.filter(function (entry) {
-        return CloudCore.charCount(entry.text) <= 12;
-      });
-      if (short.length >= limit) pool = short;
-    }
 
     if (pool.length <= limit) return pool;
 

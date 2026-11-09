@@ -165,9 +165,7 @@
     });
   }
 
-  /* 窄屏专用：句子沿高度错落排开，横向随机偏移。
-     手机屏幕又窄又高，d3-cloud 只会挤成中间一条字带；
-     竖排散点既填满屏幕，也保住了"字散落在纸上"的观感。 */
+  /* 旧版窄屏竖排散点，现已不再调用；保留函数只为兼容旧代码。 */
   function stack(options) {
     var width = Math.max(1, Math.round(options.width));
     var height = Math.max(1, Math.round(options.height));
